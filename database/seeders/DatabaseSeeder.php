@@ -12,8 +12,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            AdminSeeder::class,
-            // Nanti Anda bisa menambahkan InstrukturSeeder atau MemberSeeder di sini
+            HappyGymSeeder::class,
         ]);
     }
 }
