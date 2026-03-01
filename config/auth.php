@@ -40,6 +40,24 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Guard untuk Admin (Akses via Web)
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
+
+        // Guard untuk Instruktur (Nantinya akses via API/Sanctum)
+        'instruktur' => [
+            'driver' => 'session', // Tetap session di sini, Sanctum akan otomatis menyesuaikan
+            'provider' => 'instrukturs',
+        ],
+
+        // Guard untuk Member (Nantinya akses via API/Sanctum)
+        'member' => [
+            'driver' => 'session',
+            'provider' => 'members',
+        ],
     ],
 
     /*
@@ -62,13 +80,26 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => App\Models\User::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        // Provider untuk Admin
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Admin::class,
+        ],
+
+        // Provider untuk Instruktur
+        'instrukturs' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Instruktur::class,
+        ],
+
+        // Provider untuk Member
+        'members' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Member::class,
+        ],
     ],
 
     /*
