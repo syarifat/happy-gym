@@ -17,4 +17,10 @@ class Lokasi extends Model
         'alamat',
         'link_google_maps',
     ]; //
+
+    // Relasi ke Instruktur (1 Cabang punya Banyak Instruktur)
+    public function instrukturs()
+    {
+        return $this->hasMany(Instruktur::class, 'lokasi_id', 'lokasi_id');
+    }
 }
