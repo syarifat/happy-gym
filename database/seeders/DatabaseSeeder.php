@@ -6,13 +6,13 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         $this->call([
-            HappyGymSeeder::class,
+            AdminSeeder::class,
+            PaketSeeder::class,
+            LokasiSeeder::class,     // Lokasi harus jalan duluan
+            InstrukturSeeder::class, // Supaya instruktur bisa ambil id lokasi
         ]);
     }
 }

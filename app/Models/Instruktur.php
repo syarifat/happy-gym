@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable; 
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class Instruktur extends Authenticatable 
+class Instruktur extends Authenticatable
 {
     use Notifiable;
 
@@ -17,16 +17,16 @@ class Instruktur extends Authenticatable
         'username',
         'password',
         'spesialisasi',
-        'lokasi_id', // Tambahkan baris ini
+        'lokasi_id', // Pastikan ini ada
     ];
-
-    // Relasi ke Lokasi
-    public function lokasi()
-    {
-        return $this->belongsTo(Lokasi::class, 'lokasi_id', 'lokasi_id');
-    }
 
     protected $hidden = [
         'password',
     ];
+
+    // Relasi ke tabel Lokasi (Cabang)
+    public function lokasi()
+    {
+        return $this->belongsTo(Lokasi::class, 'lokasi_id', 'lokasi_id');
+    }
 }

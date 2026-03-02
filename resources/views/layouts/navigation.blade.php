@@ -1,15 +1,24 @@
 <aside class="w-64 bg-white flex flex-col justify-between h-screen shadow-[4px_0_24px_rgba(0,0,0,0.03)] flex-shrink-0">
     <div>
-        <div class="flex items-center justify-center h-28 border-b border-gray-100">
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-xl">
-                    h
-                </div>
-                <span class="text-xl font-extrabold text-gray-800 tracking-tight">happy<span class="text-red-600">gym</span></span>
+        <div class="flex items-center justify-center h-28 border-b border-gray-100 p-4">
+            <a href="{{ route('dashboard') }}" class="block">
+                {{-- 
+                    Mengambil logo dari public storage: storage/images/logo.png
+                    w-auto: lebar otomatis menyesuaikan aspek rasio gambar
+                    h-16: tinggi dibatasi (64px) agar serasi dengan container h-28
+                    object-contain: memastikan gambar tidak gepeng/stretch
+                    mx-auto: memastikan gambar di tengah
+                --}}
+                <img src="{{ asset('storage/images/logo.png') }}" 
+                     alt="Happy Gym Logo" 
+                     class="w-auto h-16 object-contain mx-auto">
             </a>
         </div>
 
         <nav class="mt-8 px-4 space-y-2">
+            <a href="{{ url('/dashboard') }}" class="block py-3 px-4 rounded-lg transition duration-200 {{ request()->is('dashboard*') ? 'bg-red-50 text-[#db3535] font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-[#db3535]' }}">
+                Dashboard
+            </a>
             <a href="{{ url('/member') }}" class="block py-3 px-4 rounded-lg transition duration-200 {{ request()->is('member*') ? 'bg-red-50 text-[#db3535] font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-[#db3535]' }}">
                 Member
             </a>

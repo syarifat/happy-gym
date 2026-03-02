@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Lokasi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class LokasiController extends Controller
 {
@@ -22,19 +23,25 @@ class LokasiController extends Controller
     {
         $request->validate([
             'nama_cabang' => 'required|string|max:255',
-            'alamat' => 'required',
-            'link_google_maps' => 'nullable|url',
+            'kota' => 'nullable|string|max:255',
+            'alamat' => 'required|string',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi foto
+            'jam_buka' => 'nullable|string',
+            'fasilitas_klub' => 'nullable|string',
+            'link_google_maps' => 'nullable|string',
         ]);
 
-        Lokasi::create($request->all());
+        $data = $request->all();
 
-        return redirect()->route('lokasi.index')->with('success', 'Lokasi cabang berhasil ditambahkan!');
-    }
+        // Proses upload foto jika ada
+        if ($request->hasFile('foto')) {
+            // Akan tersimpan di storage/app/public/lokasi
+            $data['foto'] = $request->file('foto')->store('lokasi', 'public');
+        }
 
-    public function edit($id)
-    {
-        $lokasi = Lokasi::findOrFail($id);
-        return view('lokasi.edit', compact('lokasi'));
+        Lokasi::create($data);
+
+        return redirect()->route('lokasi.index')->with('success', 'Cabang berhasil ditambahkan!');
     }
 
     public function update(Request $request, $id)
@@ -43,13 +50,33 @@ class LokasiController extends Controller
 
         $request->validate([
             'nama_cabang' => 'required|string|max:255',
-            'alamat' => 'required',
-            'link_google_maps' => 'nullable|url',
+            'kota' => 'nullable|string|max:255',
+            'alamat' => 'required|string',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'jam_buka' => 'nullable|string',
+            'fasilitas_klub' => 'nullable|string',
         ]);
 
-        $lokasi->update($request->all());
+        $data = $request->all();
 
-        return redirect()->route('lokasi.index')->with('success', 'Lokasi berhasil diperbarui!');
+        // Proses upload foto baru jika ada
+        if ($request->hasFile('foto')) {
+            // Hapus foto lama jika ada
+            if ($lokasi->foto && Storage::disk('public')->exists($lokasi->foto)) {
+                Storage::disk('public')->delete($lokasi->foto);
+            }
+            $data['foto'] = $request->file('foto')->store('lokasi', 'public');
+        }
+
+        $lokasi->update($data);
+
+        return redirect()->route('lokasi.index')->with('success', 'Data Cabang berhasil diperbarui!');
+    }
+
+    public function edit($id)
+    {
+        $lokasi = Lokasi::findOrFail($id);
+        return view('lokasi.edit', compact('lokasi'));
     }
 
     public function destroy($id)

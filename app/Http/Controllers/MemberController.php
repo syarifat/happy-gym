@@ -8,53 +8,28 @@ use Illuminate\Support\Facades\Hash;
 
 class MemberController extends Controller
 {
-    // 1. Tampilkan Halaman Data Member (Read)
+    // 1. Tampilkan Halaman Data Member (Read / Index)
     public function index()
     {
         $members = Member::orderBy('created_at', 'desc')->get();
         return view('member.index', compact('members'));
     }
 
-    // 2. Tampilkan Form Tambah Member (Create)
-    public function create()
+    // 2. Tampilkan Detail Member (Show)
+    public function show($id)
     {
-        return view('member.create');
+        $member = Member::findOrFail($id);
+        return view('member.show', compact('member'));
     }
 
-    // 3. Proses Simpan Data Member Baru (Store)
-    public function store(Request $request)
-    {
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:members',
-            'password' => 'required|string|min:6',
-            'no_hp' => 'nullable|string|max:15',
-            'status_membership' => 'required|in:Aktif,Tidak Aktif',
-            'tanggal_mulai_member' => 'nullable|date',
-            'tanggal_berakhir_member' => 'nullable|date',
-        ]);
-
-        Member::create([
-            'nama' => $request->nama,
-            'email' => $request->email,
-            'password' => Hash::make($request->password), // Enkripsi password
-            'no_hp' => $request->no_hp,
-            'status_membership' => $request->status_membership,
-            'tanggal_mulai_member' => $request->tanggal_mulai_member,
-            'tanggal_berakhir_member' => $request->tanggal_berakhir_member,
-        ]);
-
-        return redirect()->route('member.index')->with('success', 'Data member berhasil ditambahkan!');
-    }
-
-    // 4. Tampilkan Form Edit Member (Edit)
+    // 3. Tampilkan Form Edit Member (Edit)
     public function edit($id)
     {
         $member = Member::findOrFail($id);
         return view('member.edit', compact('member'));
     }
 
-    // 5. Proses Update Data Member (Update)
+    // 4. Proses Update Data Member (Update)
     public function update(Request $request, $id)
     {
         $member = Member::findOrFail($id);
@@ -78,7 +53,7 @@ class MemberController extends Controller
             'tanggal_berakhir_member' => $request->tanggal_berakhir_member,
         ];
 
-        // Jika password diisi, maka update password (jika tidak, biarkan password lama)
+        // Jika form password diisi, maka update password (jika kosong, biarkan password lama)
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
@@ -88,7 +63,7 @@ class MemberController extends Controller
         return redirect()->route('member.index')->with('success', 'Data member berhasil diperbarui!');
     }
 
-    // 6. Proses Hapus Data Member (Destroy)
+    // 5. Proses Hapus Data Member (Destroy)
     public function destroy($id)
     {
         $member = Member::findOrFail($id);

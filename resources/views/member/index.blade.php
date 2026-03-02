@@ -3,10 +3,7 @@
         <a href="{{ route('dashboard') }}" class="inline-block bg-[#2bc466] hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-sm transition">
             < Kembali
         </a>
-        <a href="{{ route('member.create') }}" class="inline-block bg-[#e45151] hover:bg-red-700 text-white font-semibold py-2 px-6 rounded shadow-sm transition">
-            + Tambah Member
-        </a>
-    </div>
+        </div>
 
     <h2 class="text-3xl font-bold text-gray-900 mb-6">Data Member</h2>
 
@@ -18,14 +15,14 @@
         <select class="border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
             <option>Semua Membership</option>
         </select>
-        <button class="bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm">
+        <button class="bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">
             Filter
         </button>
     </div>
 
     <div class="flex gap-4 mb-8">
-        <button class="bg-[#2bc466] hover:bg-green-600 text-white font-semibold py-2 px-6 rounded shadow-sm">Export Excel</button>
-        <button class="bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm">Export PDF</button>
+        <button class="bg-[#2bc466] hover:bg-green-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">Export Excel</button>
+        <button class="bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">Export PDF</button>
     </div>
 
     @if(session('success'))
@@ -69,7 +66,10 @@
                     </td>
                     <td class="py-4 px-6 text-center">
                         <div class="flex items-center justify-center gap-3">
+                            <a href="{{ route('member.show', $member->member_id) }}" class="text-green-500 hover:text-green-700 font-semibold text-sm">Detail</a>
+                            
                             <a href="{{ route('member.edit', $member->member_id) }}" class="text-blue-500 hover:text-blue-700 font-semibold text-sm">Ubah</a>
+                            
                             <form action="{{ route('member.destroy', $member->member_id) }}" method="POST" onsubmit="return confirm('Hapus member ini?');">
                                 @csrf
                                 @method('DELETE')

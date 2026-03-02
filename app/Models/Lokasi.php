@@ -14,9 +14,15 @@ class Lokasi extends Model
 
     protected $fillable = [
         'nama_cabang',
+        'kota',
         'alamat',
-        'link_google_maps',
-    ]; //
+        'foto',
+        'deskripsi',
+        'jam_buka',
+        'fasilitas_klub',
+        'alat_gym',
+        'link_google_maps'
+    ];
 
     // Relasi ke Instruktur (1 Cabang punya Banyak Instruktur)
     public function instrukturs()

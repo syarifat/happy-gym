@@ -1,20 +1,9 @@
 <x-app-layout>
     <div class="flex justify-between items-center mb-6">
-        <a href="{{ route('dashboard') }}" class="inline-block bg-[#2bc466] hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-sm transition">
-            < Kembali
-        </a>
-        <a href="{{ route('instruktur.create') }}" class="inline-block bg-[#e45151] hover:bg-red-700 text-white font-semibold py-2 px-6 rounded shadow-sm transition">
+        <h2 class="text-3xl font-bold text-gray-900">Daftar Instruktur</h2>
+        <a href="{{ route('instruktur.create') }}" class="bg-[#e45151] hover:bg-red-700 text-white font-semibold py-2 px-6 rounded shadow-sm transition">
             + Tambah Instruktur
         </a>
-    </div>
-
-    <h2 class="text-3xl font-bold text-gray-900 mb-6">Data Personal Trainer</h2>
-
-    <div class="flex items-center gap-4 mb-6">
-        <input type="text" placeholder="Cari instruktur..." class="border-gray-300 rounded-md shadow-sm w-64 focus:ring-red-500 focus:border-red-500">
-        <button class="bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm">
-            Cari
-        </button>
     </div>
 
     @if(session('success'))
@@ -23,42 +12,79 @@
         </div>
     @endif
 
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <form action="{{ route('instruktur.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full">
+            <label for="lokasi_id" class="text-sm font-bold text-gray-700">Filter berdasarkan Cabang:</label>
+            <select name="lokasi_id" id="lokasi_id" class="border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm min-w-[200px]">
+                <option value="">-- Semua Cabang --</option>
+                @foreach($lokasis as $l)
+                    <option value="{{ $l->lokasi_id }}" {{ request('lokasi_id') == $l->lokasi_id ? 'selected' : '' }}>
+                        {{ $l->nama_cabang }} ({{ $l->kota }})
+                    </option>
+                @endforeach
+            </select>
+            <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm">
+                Terapkan Filter
+            </button>
+
+            @if(request('lokasi_id'))
+                <a href="{{ route('instruktur.index') }}" class="text-red-500 hover:text-red-700 hover:underline font-semibold text-sm transition">
+                    Hapus Filter
+                </a>
+            @endif
+        </form>
+    </div>
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-gray-50 border-b border-gray-100">
-                    <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider">No</th>
-                    <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider">Nama Lengkap</th>
-                    <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider">Username Login</th>
-                    <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider">Spesialisasi</th>
-                    <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider text-center">Aksi</th>
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profil Instruktur</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penempatan Cabang</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
             </thead>
-            <tbody>
-                @forelse ($instrukturs as $index => $instruktur)
-                <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
-                    <td class="py-4 px-6 text-gray-600">{{ $index + 1 }}</td>
-                    <td class="py-4 px-6 font-bold text-gray-800">{{ $instruktur->nama }}</td>
-                    <td class="py-4 px-6 text-gray-600">{{ $instruktur->username }}</td>
-                    <td class="py-4 px-6 text-gray-600">
-                        <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-                            {{ $instruktur->spesialisasi ?? 'Umum' }}
-                        </span>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @forelse($instrukturs as $i)
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold text-lg">
+                                {{ substr($i->nama, 0, 1) }}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-bold text-gray-900">{{ $i->nama }}</div>
+                                <div class="text-sm text-gray-500">Username: {{ $i->username }}</div>
+                                <div class="text-xs text-blue-600 font-semibold mt-1">{{ $i->spesialisasi ?? 'General Trainer' }}</div>
+                            </div>
+                        </div>
                     </td>
-                    <td class="py-4 px-6 text-center">
-                        <div class="flex items-center justify-center gap-3">
-                            <a href="{{ route('instruktur.edit', $instruktur->instruktur_id) }}" class="text-blue-500 hover:text-blue-700 font-semibold text-sm">Ubah</a>
-                            <form action="{{ route('instruktur.destroy', $instruktur->instruktur_id) }}" method="POST" onsubmit="return confirm('Hapus instruktur ini?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-500 hover:text-red-700 font-semibold text-sm">Hapus</button>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        @if($i->lokasi)
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-red-800 bg-red-100 rounded-full">
+                                {{ $i->lokasi->nama_cabang }}
+                            </span>
+                        @else
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold leading-5 text-gray-500 bg-gray-100 rounded-full">
+                                Belum ada penempatan
+                            </span>
+                        @endif
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex gap-3">
+                            <a href="{{ route('instruktur.edit', $i->instruktur_id) }}" class="text-blue-600 hover:text-blue-900 font-semibold">Edit</a>
+                            <form action="{{ route('instruktur.destroy', $i->instruktur_id) }}" method="POST" onsubmit="return confirm('Hapus instruktur ini?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="text-red-600 hover:text-red-900 font-semibold">Hapus</button>
                             </form>
                         </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="py-8 text-center text-gray-500">Belum ada data instruktur.</td>
+                    <td colspan="3" class="px-6 py-8 text-center text-gray-500 italic">
+                        Tidak ada instruktur yang ditemukan di cabang tersebut.
+                    </td>
                 </tr>
                 @endforelse
             </tbody>
