@@ -15,7 +15,7 @@ class HappyGymSeeder extends Seeder
         $adminId = DB::table('admins')->insertGetId([
             'nama' => 'Super Admin',
             'username' => 'admin',
-            'password' => Hash::make('admin123'),
+            'password' => Hash::make('password'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -23,8 +23,8 @@ class HappyGymSeeder extends Seeder
         // 2. Seed Instrukturs
         $instrukturId = DB::table('instrukturs')->insertGetId([
             'nama' => 'Coach Arnold',
-            'username' => 'arnold',
-            'password' => Hash::make('coach123'),
+            'username' => 'instruktur',
+            'password' => Hash::make('password'),
             'spesialisasi' => 'Bodybuilding & Fitness',
             'created_at' => now(),
             'updated_at' => now(),
@@ -33,8 +33,8 @@ class HappyGymSeeder extends Seeder
         // 3. Seed Members
         $memberId = DB::table('members')->insertGetId([
             'nama' => 'Andi Setiawan',
-            'email' => 'andi@example.com',
-            'password' => Hash::make('member123'),
+            'email' => 'member@gmail.com',
+            'password' => Hash::make('password'),
             'no_hp' => '081234567890',
             'status_membership' => 'Aktif',
             'tanggal_mulai_member' => Carbon::now()->toDateString(),
