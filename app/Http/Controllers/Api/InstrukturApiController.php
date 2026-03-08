@@ -11,8 +11,17 @@ use App\Models\BookingAbsensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
+// --- MODEL TAMBAHAN UNTUK FITUR PT ---
+use App\Models\KetersediaanInstruktur;
+use App\Models\BookingPt;
+use Carbon\Carbon;
+
 class InstrukturApiController extends Controller
 {
+    // ==========================================
+    // BAGIAN 1: FITUR GYM UMUM (KODE LAMA ANDA)
+    // ==========================================
+
     public function login(Request $request)
     {
         $instruktur = Instruktur::where('username', $request->username)->first();
@@ -22,14 +31,12 @@ class InstrukturApiController extends Controller
         return response()->json(['status' => 'success', 'data' => $instruktur], 200);
     }
 
-    // Melihat jadwal mengajar instruktur tersebut
     public function getJadwalSaya($instruktur_id)
     {
         $jadwal = JadwalLatihan::where('instruktur_id', $instruktur_id)->get();
         return response()->json(['status' => 'success', 'data' => $jadwal], 200);
     }
 
-    // Melihat siapa saja yang booking di kelasnya hari ini
     public function getDaftarBooking($instruktur_id)
     {
         $booking = BookingAbsensi::with('member')
@@ -39,7 +46,6 @@ class InstrukturApiController extends Controller
         return response()->json(['status' => 'success', 'data' => $booking], 200);
     }
 
-    // Fitur Scan QR Member (Absensi Gym Umum)
     public function scanAbsensi(Request $request)
     {
         $request->validate([
@@ -60,5 +66,91 @@ class InstrukturApiController extends Controller
         ]);
 
         return response()->json(['status' => 'success', 'message' => 'Presensi berhasil'], 200);
+    }
+
+
+    // ==========================================
+    // BAGIAN 2: FITUR PERSONAL TRAINER (BARU)
+    // ==========================================
+
+    // 1. Instruktur menentukan hari dan jam luang untuk PT
+    public function setJadwalLuangPt(Request $request)
+    {
+        $request->validate([
+            'instruktur_id' => 'required|exists:instrukturs,instruktur_id',
+            'tanggal' => 'required|date',
+            'jam_mulai' => 'required',
+            'jam_selesai' => 'required',
+        ]);
+
+        $jadwal = KetersediaanInstruktur::create([
+            'instruktur_id' => $request->instruktur_id,
+            'tanggal' => $request->tanggal,
+            'jam_mulai' => $request->jam_mulai,
+            'jam_selesai' => $request->jam_selesai,
+            'is_booked' => false
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Jadwal luang PT berhasil ditambahkan!',
+            'data' => $jadwal
+        ]);
+    }
+
+    // 2. Instruktur melihat jadwal melatih PT (Siapa & Jam Berapa)
+    public function getJadwalMelatihPt($instruktur_id)
+    {
+        // Cari jadwal PT instruktur yang status bookingnya 'Booked'
+        $jadwal = BookingPt::with(['ketersediaan', 'memberPaket.member'])
+            ->whereHas('ketersediaan', function($query) use ($instruktur_id) {
+                $query->where('instruktur_id', $instruktur_id);
+            })
+            ->where('status', 'Booked') // Hanya tampilkan yang belum di-scan
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $jadwal
+        ]);
+    }
+
+    // 3. Scan QR Code Absensi PT (Mengurangi sisa sesi paket 12 -> 11)
+    public function scanQrPt(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:booking_pts,booking_id'
+        ]);
+
+        $booking = BookingPt::with('memberPaket')->find($request->booking_id);
+
+        if ($booking->status === 'Hadir') {
+            return response()->json(['status' => 'error', 'message' => 'QR Code sudah digunakan (Sesi Selesai).'], 400);
+        }
+
+        $memberPaket = $booking->memberPaket;
+
+        if ($memberPaket->sisa_sesi <= 0) {
+            return response()->json(['status' => 'error', 'message' => 'Sisa sesi paket PT member sudah habis!'], 400);
+        }
+
+        // A. Ubah status booking jadi Hadir
+        $booking->status = 'Hadir';
+        $booking->waktu_scan_qr = Carbon::now();
+        $booking->save();
+
+        // B. Kurangi sisa sesi member (-1)
+        $memberPaket->sisa_sesi = $memberPaket->sisa_sesi - 1;
+        
+        if ($memberPaket->sisa_sesi == 0) {
+            $memberPaket->status = 'Habis';
+        }
+        $memberPaket->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Absensi PT berhasil! Sisa sesi member sekarang: ' . $memberPaket->sisa_sesi,
+            'sisa_sesi' => $memberPaket->sisa_sesi
+        ]);
     }
 }
