@@ -4,8 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BookingPt extends Model
 {
-    protected $table = 'booking_pts';
-    protected $primaryKey = 'booking_id';
+    protected $primaryKey = 'booking_id'; // Penting!
     protected $fillable = ['member_paket_id', 'ketersediaan_id', 'status', 'waktu_scan_qr'];
 
     public function ketersediaan()

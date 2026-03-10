@@ -52,4 +52,5 @@ Route::prefix('instruktur')->group(function () {
     Route::get('/pt/jadwal/{instruktur_id}', [InstrukturApiController::class, 'getJadwalMelatihPt']);
     // 3. Instruktur scan QR code booking PT milik member
     Route::post('/pt/scan-qr', [InstrukturApiController::class, 'scanQrPt']);
+    Route::get('/pt/ketersediaan/{instruktur_id}', [InstrukturApiController::class, 'getKetersediaanPt']);
 });

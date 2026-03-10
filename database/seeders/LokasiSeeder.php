@@ -11,7 +11,7 @@ class LokasiSeeder extends Seeder
     {
         DB::table('lokasis')->insert([
             [
-                'nama_cabang' => 'Happy Gym - Pusat Tulungagung',
+                'nama_cabang' => 'Happy Gym - Cabang Tulungagung',
                 'kota' => 'Tulungagung',
                 'alamat' => 'Jl. Pahlawan No. 123, Kedungwaru, Tulungagung',
                 'jam_buka' => "Senin-Jumat | 06:00 - 22:00\nSabtu-Minggu | 06:00 - 20:00",
@@ -21,7 +21,7 @@ class LokasiSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'nama_cabang' => 'Happy Gym - Cabang Kediri',
+                'nama_cabang' => 'Happy Gym - Pusat Kediri',
                 'kota' => 'Kediri',
                 'alamat' => 'Jl. Dhoho No. 45, Kota Kediri',
                 'jam_buka' => "Senin-Jumat | 06:00 - 22:00\nSabtu-Minggu | 06:00 - 20:00",

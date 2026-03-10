@@ -153,4 +153,17 @@ class InstrukturApiController extends Controller
             'sisa_sesi' => $memberPaket->sisa_sesi
         ]);
     }
+
+    // Menampilkan daftar jadwal luang (ketersediaan) milik instruktur
+    public function getKetersediaanPt($instruktur_id)
+    {
+        $data = \App\Models\KetersediaanInstruktur::where('instruktur_id', $instruktur_id)
+                ->orderBy('tanggal', 'desc') // Urutkan dari yang terbaru
+                ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
 }

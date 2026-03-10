@@ -4,12 +4,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class MemberPaketPt extends Model
 {
-    protected $table = 'member_paket_pts';
-    protected $primaryKey = 'member_paket_id';
+    protected $primaryKey = 'member_paket_id'; // Penting!
     protected $fillable = ['member_id', 'paket_id', 'sisa_sesi', 'expired_date', 'status'];
 
     public function member()
     {
-        return $this->belongsTo(Member::class, 'member_id', 'member_id'); // Pastikan model Member ada
+        return $this->belongsTo(Member::class, 'member_id', 'member_id');
     }
 }

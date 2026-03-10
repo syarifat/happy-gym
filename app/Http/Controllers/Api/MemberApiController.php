@@ -13,6 +13,7 @@ use App\Models\BookingAbsensi;
 use App\Models\Presensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
 
@@ -169,7 +170,7 @@ class MemberApiController extends Controller
         ]);
 
         // Buat Order ID unik untuk Midtrans (Misal: GYM-123-170984920)
-        $orderId = 'GYM-' . $pemesanan->id . '-' . time();
+        $orderId = 'GYM-' . $pemesanan->getKey() . '-' . time();
 
         // 2. Setup Konfigurasi Midtrans
         Config::$serverKey = config('midtrans.server_key');
@@ -346,6 +347,9 @@ class MemberApiController extends Controller
 
     public function midtransCallback(Request $request)
     {
+        // 1. Catat semua data yang dikirim Midtrans ke file log Laravel (storage/logs/laravel.log)
+        \Log::info('Midtrans Callback:', $request->all());
+
         $serverKey = config('midtrans.server_key');
         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
 
@@ -358,20 +362,39 @@ class MemberApiController extends Controller
 
                 $pemesanan = PemesananPaket::find($pemesananId);
                 
-                if ($pemesanan) {
-                    // 1. Ubah status pemesanan
+                // Pastikan pemesanan ada dan statusnya masih Pending agar tidak double input
+                if ($pemesanan && $pemesanan->status_persetujuan == 'Pending') {
+                    
+                    // A. Ubah status pemesanan
                     $pemesanan->status_persetujuan = 'Disetujui';
                     $pemesanan->save();
 
-                    // 2. Aktifkan Membership
+                    // B. INSERT KE TABEL PEMBAYARANS (Sesuaikan dengan SQL Anda)
+                    \App\Models\Pembayaran::create([
+                        'pemesanan_id' => $pemesanan->pemesanan_id, // Sesuai nama PK di tabel pemesanan_pakets
+                        'member_id' => $pemesanan->member_id,
+                        'order_id' => $request->order_id,
+                        'transaction_id' => $request->transaction_id,
+                        'metode' => $request->payment_type,
+                        'jumlah' => $request->gross_amount,
+                        'status' => 'settlement', // Sesuai opsi ENUM di database
+                        'tanggal_bayar' => now(),
+                    ]);
+
+                    // C. Aktifkan Membership
                     $member = Member::find($pemesanan->member_id);
                     if ($member) {
                         $member->status_membership = 'Aktif';
                         $member->save();
                     }
+
+                    \Log::info('Pembayaran Berhasil Diproses untuk Order: ' . $request->order_id);
                 }
             }
+        } else {
+            \Log::warning('Signature Key Midtrans Tidak Cocok!');
         }
+
         return response()->json(['message' => 'Callback diterima']);
     }
 }
