@@ -15,4 +15,9 @@ class KetersediaanInstruktur extends Model
     protected $casts = [
         'is_booked' => 'boolean',
     ];
+
+    public function instruktur()
+    {
+        return $this->belongsTo(Instruktur::class, 'instruktur_id', 'instruktur_id');
+    }
 }

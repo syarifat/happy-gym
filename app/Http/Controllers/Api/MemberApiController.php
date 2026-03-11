@@ -3,82 +3,83 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Member;
-use App\Models\Paket;
-use App\Models\Pengumuman;
-use App\Models\Lokasi;
-use App\Models\PemesananPaket;
-use App\Models\JadwalLatihan;
-use App\Models\BookingAbsensi;
-use App\Models\Presensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 use Midtrans\Config;
 use Midtrans\Snap;
 
-// --- MODEL TAMBAHAN UNTUK FITUR PT ---
+// --- SEMUA MODEL YANG DIBUTUHKAN ---
+use App\Models\Member;
+use App\Models\Paket;
+use App\Models\Instruktur;
+use App\Models\PemesananPaket;
+use App\Models\Pembayaran;
+use App\Models\JadwalLatihan;
+use App\Models\BookingAbsensi;
+use App\Models\Presensi;
 use App\Models\MemberPaketPt;
 use App\Models\KetersediaanInstruktur;
 use App\Models\BookingPt;
-use Carbon\Carbon;
 
 class MemberApiController extends Controller
 {
-    // ==========================================
-    // --- FITUR LAMA (GYM UMUM) ---
-    // ==========================================
+    // =========================================================================
+    // BAGIAN 1: AUTENTIKASI & PROFIL (POIN 2, 3, 4, 11, 12)
+    // =========================================================================
 
-    // --- AUTH ---
     public function register(Request $request)
     {
-        // Cek apakah data masuk atau tidak dengan log (opsional)
-        // \Log::info($request->all()); 
-
         $request->validate([
             'nama' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:members,email', // Pastikan nama tabel 'members'
+            'email' => 'required|string|email|max:255|unique:members,email',
             'no_hp' => 'required|string|max:15',
             'password' => 'required|string|min:6',
         ]);
 
-        $member = \App\Models\Member::create([
+        $member = Member::create([
             'nama' => $request->nama,
             'email' => $request->email,
             'no_hp' => $request->no_hp,
-            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
-            'status_membership' => 'Tidak Aktif',
+            'password' => Hash::make($request->password),
+            'status_membership' => 'Tidak Aktif', // Status awal (Poin 2)
         ]);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Registrasi berhasil!',
-            'data' => $member
-        ], 201);
+        return response()->json(['status' => 'success', 'message' => 'Registrasi berhasil!', 'data' => $member], 201);
     }
 
     public function login(Request $request)
     {
         $member = Member::where('email', $request->email)->first();
         if (!$member || !Hash::check($request->password, $member->password)) {
-            return response()->json(['status' => 'error', 'message' => 'Login Gagal'], 401);
+            return response()->json(['status' => 'error', 'message' => 'Email atau Password salah'], 401);
         }
-        return response()->json(['status' => 'success', 'data' => $member], 200);
+        return response()->json(['status' => 'success', 'message' => 'Login berhasil', 'data' => $member], 200);
     }
 
     public function getProfile($id)
     {
-        $member = Member::findOrFail($id);
+        $member = Member::find($id);
+        if (!$member) return response()->json(['status' => 'error', 'message' => 'Member tidak ditemukan'], 404);
+        
+        // Cari paket terakhir yang dibeli dan disetujui
+        $latestPemesanan = \App\Models\PemesananPaket::where('member_id', $id)
+                            ->where('status_persetujuan', 'Disetujui')
+                            ->orderBy('tanggal_pesan', 'desc')
+                            ->with('paket')
+                            ->first();
+
+        // Tambahkan properti baru secara dinamis untuk dikirim ke Android
+        $member->nama_paket_aktif = $latestPemesanan && $latestPemesanan->paket ? $latestPemesanan->paket->nama_paket : null;
+
         return response()->json(['status' => 'success', 'data' => $member], 200);
     }
 
-    // --- FITUR UPDATE DATA PRIBADI (Poin 11 Requirement) ---
     public function updateProfile(Request $request, $id)
     {
         $member = Member::find($id);
-        if (!$member) {
-            return response()->json(['status' => 'error', 'message' => 'Member tidak ditemukan'], 404);
-        }
+        if (!$member) return response()->json(['status' => 'error', 'message' => 'Member tidak ditemukan'], 404);
 
         $request->validate([
             'nama' => 'required|string|max:255',
@@ -89,49 +90,139 @@ class MemberApiController extends Controller
         $member->nama = $request->nama;
         $member->email = $request->email;
         $member->no_hp = $request->no_hp;
-
-        // Update password kalau diisi saja
         if ($request->filled('password')) {
             $member->password = Hash::make($request->password);
         }
-
         $member->save();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Profil berhasil diperbarui!',
-            'data' => $member
-        ], 200);
+        return response()->json(['status' => 'success', 'message' => 'Profil diperbarui!', 'data' => $member], 200);
     }
 
-    // --- DATA MASTER ---
-    public function getPakets() { return response()->json(Paket::all(), 200); }
-    public function getPengumumans() { return response()->json(Pengumuman::orderBy('tanggal_post', 'desc')->get(), 200); }
-    public function getLokasis() { return response()->json(Lokasi::all(), 200); }
 
-    // --- FITUR JADWAL & BOOKING ---
-    public function getJadwal()
+    // =========================================================================
+    // BAGIAN 2: MASTER DATA & TRANSAKSI (POIN 5 & 6)
+    // =========================================================================
+
+    public function getPakets()
     {
-        // Mengambil jadwal beserta nama instrukturnya
+        $pakets = Paket::all();
+        return response()->json(['status' => 'success', 'data' => $pakets], 200);
+    }
+
+    public function getDaftarInstruktur()
+    {
+        // Poin 6: Menampilkan foto, nama, spesialisasi
+        $instruktur = Instruktur::all();
+        return response()->json(['status' => 'success', 'data' => $instruktur], 200);
+    }
+
+    public function beliPaket(Request $request)
+    {
+        $request->validate(['member_id' => 'required', 'paket_id' => 'required']);
+        $member = Member::find($request->member_id);
+        $paket = Paket::find($request->paket_id);
+
+        if (!$member || !$paket) return response()->json(['status' => 'error', 'message' => 'Data tidak valid'], 404);
+
+        $pemesanan = PemesananPaket::create([
+            'member_id' => $member->member_id,
+            'paket_id' => $paket->paket_id,
+            'status_persetujuan' => 'Pending',
+            'tanggal_pesan' => now()->toDateString(),
+        ]);
+
+        $orderId = 'GYM-' . $pemesanan->getKey() . '-' . time();
+
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = config('midtrans.is_sanitized');
+        Config::$is3ds = config('midtrans.is_3ds');
+
+        $params = [
+            'transaction_details' => ['order_id' => $orderId, 'gross_amount' => $paket->harga],
+            'customer_details' => ['first_name' => $member->nama, 'email' => $member->email, 'phone' => $member->no_hp]
+        ];
+
+        try {
+            $snapToken = Snap::getSnapToken($params);
+            return response()->json(['status' => 'success', 'snap_token' => $snapToken, 'order_id' => $orderId], 200);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function midtransCallback(Request $request)
+    {
+        $serverKey = config('midtrans.server_key');
+        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+
+        if ($hashed == $request->signature_key) {
+            if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
+                
+                $orderParts = explode('-', $request->order_id);
+                $pemesananId = $orderParts[1];
+                $pemesanan = PemesananPaket::with('paket')->find($pemesananId);
+                
+                if ($pemesanan && $pemesanan->status_persetujuan == 'Pending') {
+                    
+                    // 1. Ubah status pemesanan
+                    $pemesanan->status_persetujuan = 'Disetujui';
+                    $pemesanan->save();
+
+                    // 2. Catat ke Riwayat Pembayaran (Poin 10)
+                    Pembayaran::create([
+                        'pemesanan_id' => $pemesanan->pemesanan_id,
+                        'member_id' => $pemesanan->member_id,
+                        'order_id' => $request->order_id,
+                        'metode' => $request->payment_type,
+                        'jumlah' => $request->gross_amount,
+                        'status' => 'settlement',
+                        'tanggal_bayar' => now(),
+                    ]);
+
+                    // 3. LOGIKA KUNCI: Bedakan Paket Gym Umum vs Personal Trainer
+                    $paket = $pemesanan->paket;
+                    if ($paket->jenis == 'Personal Training' || str_contains(strtolower($paket->nama_paket), 'pt')) {
+                        // Jika beli PT -> Tambah sesi
+                        MemberPaketPt::create([
+                            'member_id' => $pemesanan->member_id,
+                            'paket_id' => $paket->paket_id,
+                            'sisa_sesi' => $paket->jumlah_sesi ?? 12, // Default 12 sesi jika null
+                            'expired_date' => Carbon::now()->addDays($paket->durasi ?? 30)->toDateString(),
+                            'status' => 'Aktif'
+                        ]);
+                    } else {
+                        // Jika beli Gym Umum -> Aktifkan Member & Set Tanggal Habis
+                        $member = Member::find($pemesanan->member_id);
+                        $member->status_membership = 'Aktif';
+                        $member->tanggal_berakhir_member = Carbon::now()->addDays($paket->durasi ?? 30)->toDateString();
+                        $member->save();
+                    }
+                }
+            }
+        }
+        return response()->json(['message' => 'Callback diproses']);
+    }
+
+
+    // =========================================================================
+    // BAGIAN 3: JADWAL & BOOKING GYM UMUM (KELAS)
+    // =========================================================================
+
+    public function getJadwalGymUmum()
+    {
         $jadwal = JadwalLatihan::with('instruktur')->get();
         return response()->json(['status' => 'success', 'data' => $jadwal], 200);
     }
 
-    public function bookingJadwal(Request $request)
+    public function bookingGymUmum(Request $request)
     {
-        $request->validate([
-            'member_id' => 'required',
-            'jadwal_id' => 'required',
-        ]);
-
+        $request->validate(['member_id' => 'required', 'jadwal_id' => 'required']);
         $jadwal = JadwalLatihan::findOrFail($request->jadwal_id);
 
-        // Cek kuota
-        $jumlahBooking = BookingAbsensi::where('jadwal_id', $request->jadwal_id)
-                        ->where('status_booking', 'Booked')->count();
-        
+        $jumlahBooking = BookingAbsensi::where('jadwal_id', $request->jadwal_id)->where('status_booking', 'Booked')->count();
         if ($jumlahBooking >= $jadwal->kuota) {
-            return response()->json(['status' => 'error', 'message' => 'Kuota jadwal sudah penuh'], 400);
+            return response()->json(['status' => 'error', 'message' => 'Kuota penuh'], 400);
         }
 
         $booking = BookingAbsensi::create([
@@ -143,258 +234,107 @@ class MemberApiController extends Controller
             'status_hadir' => 'Belum Absen'
         ]);
 
-        return response()->json(['status' => 'success', 'data' => $booking], 201);
-    }
-
-    // --- PEMESANAN PAKET ---
-    public function beliPaket(Request $request)
-    {
-        $request->validate([
-            'member_id' => 'required',
-            'paket_id' => 'required',
-        ]);
-
-        $member = Member::find($request->member_id);
-        $paket = Paket::find($request->paket_id);
-
-        if (!$member || !$paket) {
-            return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan'], 404);
-        }
-
-        // 1. Buat data pemesanan di database dengan status Pending
-        $pemesanan = PemesananPaket::create([
-            'member_id' => $member->member_id,
-            'paket_id' => $paket->paket_id,
-            'status_persetujuan' => 'Pending',
-            'tanggal_pesan' => now()->toDateString(),
-        ]);
-
-        // Buat Order ID unik untuk Midtrans (Misal: GYM-123-170984920)
-        $orderId = 'GYM-' . $pemesanan->getKey() . '-' . time();
-
-        // 2. Setup Konfigurasi Midtrans
-        Config::$serverKey = config('midtrans.server_key');
-        Config::$isProduction = config('midtrans.is_production');
-        Config::$isSanitized = config('midtrans.is_sanitized');
-        Config::$is3ds = config('midtrans.is_3ds');
-
-        // 3. Buat Parameter untuk dikirim ke Midtrans
-        $params = [
-            'transaction_details' => [
-                'order_id' => $orderId,
-                'gross_amount' => $paket->harga, // Ambil harga dari tabel paket
-            ],
-            'customer_details' => [
-                'first_name' => $member->nama,
-                'email' => $member->email,
-                'phone' => $member->no_hp ?? '0800000000',
-            ]
-        ];
-
-        try {
-            // 4. Dapatkan Snap Token dari Midtrans
-            $snapToken = Snap::getSnapToken($params);
-
-            // Simpan Order ID Midtrans ke tabel pemesanan jika diperlukan (Opsional tapi disarankan)
-            // $pemesanan->update(['order_id_midtrans' => $orderId]);
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Token pembayaran berhasil dibuat',
-                'snap_token' => $snapToken,
-                'order_id' => $orderId,
-                'data' => $pemesanan
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gagal membuat token Midtrans: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    // --- RIWAYAT ---
-    public function getRiwayatPresensi($member_id)
-    {
-        $riwayat = Presensi::where('member_id', $member_id)->orderBy('waktu_presensi', 'desc')->get();
-        return response()->json(['status' => 'success', 'data' => $riwayat], 200);
+        return response()->json(['status' => 'success', 'message' => 'Berhasil booking kelas', 'data' => $booking], 201);
     }
 
 
-    // ==========================================
-    // --- FITUR BARU: PERSONAL TRAINER (PT) ---
-    // ==========================================
+    // =========================================================================
+    // BAGIAN 4: JADWAL & BOOKING PERSONAL TRAINER (POIN 7)
+    // =========================================================================
 
-    // 1. Cek Sisa Sesi Paket PT Member
     public function getPaketPtAktif($member_id)
     {
         $paket = MemberPaketPt::where('member_id', $member_id)
-            ->where('status', 'Aktif')
-            ->where('sisa_sesi', '>', 0)
-            ->where('expired_date', '>=', Carbon::now()->toDateString())
-            ->get();
-
-        return response()->json([
-            'status' => 'success', 
-            'data' => $paket
-        ], 200);
+            ->where('status', 'Aktif')->where('sisa_sesi', '>', 0)
+            ->where('expired_date', '>=', Carbon::now()->toDateString())->get();
+        return response()->json(['status' => 'success', 'data' => $paket], 200);
     }
 
-    // 2. Tampilkan Slot Instruktur yang Masih Kosong
     public function getInstrukturPtTersedia()
     {
-        // Hanya tampilkan jadwal hari ini ke depan, dan yang belum dibooking
-        $tersedia = KetersediaanInstruktur::with('instruktur') // Ambil relasi nama instruktur
+        $tersedia = KetersediaanInstruktur::with('instruktur')
             ->where('tanggal', '>=', Carbon::now()->toDateString())
-            ->where('is_booked', false)
-            ->orderBy('tanggal', 'asc')
-            ->orderBy('jam_mulai', 'asc')
-            ->get();
-
-        return response()->json([
-            'status' => 'success', 
-            'data' => $tersedia
-        ], 200);
+            ->where('is_booked', 0)
+            ->orderBy('tanggal', 'asc')->orderBy('jam_mulai', 'asc')->get();
+        return response()->json(['status' => 'success', 'data' => $tersedia], 200);
     }
 
-    // 3. Member Melakukan Booking PT
     public function bookingPt(Request $request)
     {
-        $request->validate([
-            'member_paket_id' => 'required|exists:member_paket_pts,member_paket_id',
-            'ketersediaan_id' => 'required|exists:ketersediaan_instrukturs,ketersediaan_id',
-        ]);
+        $request->validate(['member_paket_id' => 'required', 'ketersediaan_id' => 'required']);
 
-        // Cek apakah slot masih kosong
         $slot = KetersediaanInstruktur::find($request->ketersediaan_id);
-        if ($slot->is_booked) {
-            return response()->json(['status' => 'error', 'message' => 'Maaf, slot jadwal ini baru saja dibooking orang lain.'], 400);
-        }
+        if ($slot->is_booked) return response()->json(['status' => 'error', 'message' => 'Slot sudah dibooking'], 400);
 
-        // Cek apakah paket member masih valid
         $paket = MemberPaketPt::find($request->member_paket_id);
-        if ($paket->sisa_sesi <= 0 || $paket->status != 'Aktif') {
-            return response()->json(['status' => 'error', 'message' => 'Paket PT tidak aktif atau sisa sesi habis.'], 400);
-        }
+        if ($paket->sisa_sesi <= 0) return response()->json(['status' => 'error', 'message' => 'Sisa sesi habis'], 400);
 
-        // Kunci slot instruktur agar tidak bisa dipilih orang lain
         $slot->is_booked = true;
         $slot->save();
 
-        // Buat data booking
         $booking = BookingPt::create([
             'member_paket_id' => $request->member_paket_id,
             'ketersediaan_id' => $request->ketersediaan_id,
-            'status' => 'Booked'
+            'status' => 'Booked' // Poin 7: Status Booking = Booked
         ]);
 
-        return response()->json([
-            'status' => 'success', 
-            'message' => 'Berhasil booking jadwal PT!', 
-            'data' => $booking
-        ], 200);
+        return response()->json(['status' => 'success', 'message' => 'Berhasil booking PT', 'data' => $booking], 200);
     }
 
-    // 4. Fitur Reschedule (Ganti Jadwal)
     public function reschedulePt(Request $request)
     {
-        $request->validate([
-            'booking_id' => 'required|exists:booking_pts,booking_id',
-            'ketersediaan_id_baru' => 'required|exists:ketersediaan_instrukturs,ketersediaan_id',
-        ]);
-
+        // Fitur Pelengkap: Member bisa pindah jadwal jika tidak bisa datang
+        $request->validate(['booking_id' => 'required', 'ketersediaan_id_baru' => 'required']);
+        
         $bookingLama = BookingPt::with('ketersediaan')->find($request->booking_id);
-
-        // ATURAN DOSEN: Validasi Reschedule Minimal 6 Jam Sebelum Latihan Dimulai
         $waktuJadwalLama = Carbon::parse($bookingLama->ketersediaan->tanggal . ' ' . $bookingLama->ketersediaan->jam_mulai);
+        
         if (Carbon::now()->diffInHours($waktuJadwalLama, false) < 6) {
-            return response()->json(['status' => 'error', 'message' => 'Reschedule ditolak. Maksimal ganti jadwal adalah 6 jam sebelum sesi dimulai.'], 400);
+            return response()->json(['status' => 'error', 'message' => 'Maksimal reschedule adalah H-6 jam'], 400);
         }
 
-        // Validasi slot baru
         $slotBaru = KetersediaanInstruktur::find($request->ketersediaan_id_baru);
-        if ($slotBaru->is_booked) {
-            return response()->json(['status' => 'error', 'message' => 'Slot jadwal baru sudah terisi, silakan pilih jam lain.'], 400);
-        }
+        if ($slotBaru->is_booked) return response()->json(['status' => 'error', 'message' => 'Slot baru sudah terisi'], 400);
 
-        // 1. Lepas slot jadwal lama (kembalikan jadi kosong)
-        $slotLama = $bookingLama->ketersediaan;
-        $slotLama->is_booked = false;
-        $slotLama->save();
+        // Lepas slot lama, kunci slot baru
+        $bookingLama->ketersediaan->update(['is_booked' => false]);
+        $slotBaru->update(['is_booked' => true]);
 
-        // 2. Kunci slot jadwal baru
-        $slotBaru->is_booked = true;
-        $slotBaru->save();
+        $bookingLama->update(['status' => 'Reschedule']);
+        $bookingBaru = BookingPt::create(['member_paket_id' => $bookingLama->member_paket_id, 'ketersediaan_id' => $slotBaru->ketersediaan_id, 'status' => 'Booked']);
 
-        // 3. Ubah status booking lama menjadi 'Reschedule' (sebagai riwayat)
-        $bookingLama->status = 'Reschedule';
-        $bookingLama->save();
-
-        // 4. Buat bookingan baru
-        $bookingBaru = BookingPt::create([
-            'member_paket_id' => $bookingLama->member_paket_id,
-            'ketersediaan_id' => $slotBaru->ketersediaan_id,
-            'status' => 'Booked'
-        ]);
-
-        return response()->json([
-            'status' => 'success', 
-            'message' => 'Jadwal berhasil di-reschedule!', 
-            'data' => $bookingBaru
-        ], 200);
+        return response()->json(['status' => 'success', 'message' => 'Reschedule berhasil', 'data' => $bookingBaru], 200);
     }
 
-    public function midtransCallback(Request $request)
+
+    // =========================================================================
+    // BAGIAN 5: PUSAT RIWAYAT MEMBER (POIN 10)
+    // =========================================================================
+
+    public function getRiwayatPembayaran($member_id)
     {
-        // 1. Catat semua data yang dikirim Midtrans ke file log Laravel (storage/logs/laravel.log)
-        \Log::info('Midtrans Callback:', $request->all());
+        $riwayat = Pembayaran::select('pembayarans.*', 'pakets.nama_paket')
+            ->join('pemesanan_pakets', 'pembayarans.pemesanan_id', '=', 'pemesanan_pakets.pemesanan_id')
+            ->join('pakets', 'pemesanan_pakets.paket_id', '=', 'pakets.paket_id')
+            ->where('pembayarans.member_id', $member_id)
+            ->orderBy('pembayarans.tanggal_bayar', 'desc')->get();
+        return response()->json(['status' => 'success', 'data' => $riwayat], 200);
+    }
 
-        $serverKey = config('midtrans.server_key');
-        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+    public function getRiwayatLatihan($member_id)
+    {
+        // Poin 10: Riwayat Kehadiran Latihan Biasa (Dari tabel Presensi)
+        $riwayat = Presensi::with('instruktur')->where('member_id', $member_id)->orderBy('waktu_presensi', 'desc')->get();
+        return response()->json(['status' => 'success', 'data' => $riwayat], 200);
+    }
 
-        if ($hashed == $request->signature_key) {
-            if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
-                
-                // Ekstrak ID Pemesanan dari order_id (Format kita: GYM-{ID}-time)
-                $orderParts = explode('-', $request->order_id);
-                $pemesananId = $orderParts[1];
-
-                $pemesanan = PemesananPaket::find($pemesananId);
-                
-                // Pastikan pemesanan ada dan statusnya masih Pending agar tidak double input
-                if ($pemesanan && $pemesanan->status_persetujuan == 'Pending') {
-                    
-                    // A. Ubah status pemesanan
-                    $pemesanan->status_persetujuan = 'Disetujui';
-                    $pemesanan->save();
-
-                    // B. INSERT KE TABEL PEMBAYARANS (Sesuaikan dengan SQL Anda)
-                    \App\Models\Pembayaran::create([
-                        'pemesanan_id' => $pemesanan->pemesanan_id, // Sesuai nama PK di tabel pemesanan_pakets
-                        'member_id' => $pemesanan->member_id,
-                        'order_id' => $request->order_id,
-                        'transaction_id' => $request->transaction_id,
-                        'metode' => $request->payment_type,
-                        'jumlah' => $request->gross_amount,
-                        'status' => 'settlement', // Sesuai opsi ENUM di database
-                        'tanggal_bayar' => now(),
-                    ]);
-
-                    // C. Aktifkan Membership
-                    $member = Member::find($pemesanan->member_id);
-                    if ($member) {
-                        $member->status_membership = 'Aktif';
-                        $member->save();
-                    }
-
-                    \Log::info('Pembayaran Berhasil Diproses untuk Order: ' . $request->order_id);
-                }
-            }
-        } else {
-            \Log::warning('Signature Key Midtrans Tidak Cocok!');
-        }
-
-        return response()->json(['message' => 'Callback diterima']);
+    public function getRiwayatBookingPt($member_id)
+    {
+        // Poin 10: Riwayat Booking Instruktur PT
+        $riwayat = BookingPt::with(['ketersediaan.instruktur'])
+            ->whereHas('memberPaket', function($query) use ($member_id) {
+                $query->where('member_id', $member_id);
+            })->orderBy('created_at', 'desc')->get();
+        return response()->json(['status' => 'success', 'data' => $riwayat], 200);
     }
 }
