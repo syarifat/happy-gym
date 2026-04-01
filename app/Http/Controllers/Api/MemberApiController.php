@@ -36,6 +36,7 @@ class MemberApiController extends Controller
             'email' => 'required|string|email|max:255|unique:members,email',
             'no_hp' => 'required|string|max:15',
             'password' => 'required|string|min:6',
+            'lokasi_id' => 'required' // <--- TAMBAHAN BARU
         ]);
 
         $member = Member::create([
@@ -43,7 +44,8 @@ class MemberApiController extends Controller
             'email' => $request->email,
             'no_hp' => $request->no_hp,
             'password' => Hash::make($request->password),
-            'status_membership' => 'Tidak Aktif', // Status awal (Poin 2)
+            'status_membership' => 'Tidak Aktif',
+            'lokasi_id' => $request->lokasi_id // <--- TAMBAHAN BARU (Pastikan kolom ini ada di tabel members)
         ]);
 
         return response()->json(['status' => 'success', 'message' => 'Registrasi berhasil!', 'data' => $member], 201);
@@ -250,12 +252,22 @@ class MemberApiController extends Controller
         return response()->json(['status' => 'success', 'data' => $paket], 200);
     }
 
-    public function getInstrukturPtTersedia()
+    // Ubah parameternya menjadi menerima $member_id
+    public function getInstrukturPtTersedia($member_id) 
     {
+        // Cari member ini ada di cabang mana
+        $member = Member::find($member_id);
+        $cabang_id_member = $member->lokasi_id;
+
+        // Ambil jadwal HANYA untuk instruktur yang lokasi_id-nya SAMA dengan member
         $tersedia = KetersediaanInstruktur::with('instruktur')
+            ->whereHas('instruktur', function ($query) use ($cabang_id_member) {
+                $query->where('lokasi_id', $cabang_id_member); // FILTER CABANG!
+            })
             ->where('tanggal', '>=', Carbon::now()->toDateString())
             ->where('is_booked', 0)
             ->orderBy('tanggal', 'asc')->orderBy('jam_mulai', 'asc')->get();
+
         return response()->json(['status' => 'success', 'data' => $tersedia], 200);
     }
 

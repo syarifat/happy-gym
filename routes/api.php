@@ -28,7 +28,7 @@ Route::prefix('member')->group(function () {
 
     // 4. Personal Trainer (PT) (Poin 7)
     Route::get('/pt/paket-aktif/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getPaketPtAktif']);
-    Route::get('/pt/instruktur', [\App\Http\Controllers\Api\MemberApiController::class, 'getInstrukturPtTersedia']);
+    Route::get('/pt/instruktur/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getInstrukturPtTersedia']);
     Route::post('/pt/booking', [\App\Http\Controllers\Api\MemberApiController::class, 'bookingPt']);
     Route::post('/pt/reschedule', [\App\Http\Controllers\Api\MemberApiController::class, 'reschedulePt']);
 

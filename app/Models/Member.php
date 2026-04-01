@@ -14,7 +14,7 @@ class Member extends Authenticatable
 
     protected $fillable = [
         'nama', 'email', 'password', 'no_hp', 'status_membership', 
-        'tanggal_mulai_member', 'tanggal_berakhir_member'
+        'tanggal_mulai_member', 'tanggal_berakhir_member', 'lokasi_id'
     ];
 
     protected $hidden = [
