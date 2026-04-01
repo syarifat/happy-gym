@@ -54,11 +54,17 @@ class MemberApiController extends Controller
 
     public function getLokasis()
     {
-        // Mengambil semua data cabang gym
         $lokasis = Lokasi::all();
         
-        // Android meminta balasan berupa Array JSON langsung, jadi kita return seperti ini:
-        return response()->json($lokasis, 200);
+        // Terjemahkan nama kolom database (nama_cabang) ke format Android (nama_lokasi)
+        $formattedLokasi = $lokasis->map(function ($cabang) {
+            return [
+                'lokasi_id' => $cabang->lokasi_id, 
+                'nama_lokasi' => $cabang->nama_cabang // <--- INI KUNCINYA
+            ];
+        });
+        
+        return response()->json($formattedLokasi, 200);
     }
 
     public function login(Request $request)
