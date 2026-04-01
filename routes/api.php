@@ -13,6 +13,7 @@ Route::post('/midtrans/callback', [MemberApiController::class, 'midtransCallback
 Route::prefix('member')->group(function () {
     // 1. Auth & Profil (Poin 2, 3, 4, 11)
     Route::post('/register', [\App\Http\Controllers\Api\MemberApiController::class, 'register']);
+    Route::get('/lokasis', [\App\Http\Controllers\Api\MemberApiController::class, 'getLokasis']);
     Route::post('/login', [\App\Http\Controllers\Api\MemberApiController::class, 'login']);
     Route::get('/profile/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getProfile']);
     Route::put('/profile/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'updateProfile']);

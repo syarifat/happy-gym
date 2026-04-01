@@ -22,6 +22,7 @@ use App\Models\Presensi;
 use App\Models\MemberPaketPt;
 use App\Models\KetersediaanInstruktur;
 use App\Models\BookingPt;
+use App\Models\Lokasi; // <--- Pastikan ini ada
 
 class MemberApiController extends Controller
 {
@@ -49,6 +50,15 @@ class MemberApiController extends Controller
         ]);
 
         return response()->json(['status' => 'success', 'message' => 'Registrasi berhasil!', 'data' => $member], 201);
+    }
+
+    public function getLokasis()
+    {
+        // Mengambil semua data cabang gym
+        $lokasis = Lokasi::all();
+        
+        // Android meminta balasan berupa Array JSON langsung, jadi kita return seperti ini:
+        return response()->json($lokasis, 200);
     }
 
     public function login(Request $request)
