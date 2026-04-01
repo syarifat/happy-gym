@@ -106,7 +106,7 @@ class InstrukturApiController extends Controller
             'member', // Ambil data membernya
             'bookingPts' => function($query) {
                 // Ambil HANYA jadwal booking yang statusnya Booked/Reschedule dan tanggalnya hari ini/ke depan
-                $query->whereIn('status', ['Booked', 'Reschedule'])
+                $query->where('status', 'Booked')
                       ->whereHas('ketersediaan', function($q) {
                           $q->where('tanggal', '>=', \Carbon\Carbon::now()->toDateString());
                       })
