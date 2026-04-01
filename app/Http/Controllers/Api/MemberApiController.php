@@ -271,24 +271,52 @@ class MemberApiController extends Controller
 
     public function getPaketPtAktif($member_id)
     {
-        $paket = MemberPaketPt::where('member_id', $member_id)
+        // Tambahkan with('instruktur')
+        $paket = MemberPaketPt::with('instruktur')
+            ->where('member_id', $member_id)
             ->where('status', 'Aktif')->where('sisa_sesi', '>', 0)
             ->where('expired_date', '>=', Carbon::now()->toDateString())->get();
         return response()->json(['status' => 'success', 'data' => $paket], 200);
     }
 
-    // Ubah parameternya menjadi menerima $member_id
+    public function getCoachCabang($member_id)
+    {
+        $member = Member::find($member_id);
+        // Ambil instruktur yang lokasinya sama dengan cabang member
+        $coaches = Instruktur::where('lokasi_id', $member->lokasi_id)->get();
+        return response()->json(['status' => 'success', 'data' => $coaches], 200);
+    }
+
+    public function pilihCoachPt(Request $request)
+    {
+        $request->validate([
+            'member_paket_id' => 'required',
+            'instruktur_id' => 'required'
+        ]);
+
+        $paket = MemberPaketPt::find($request->member_paket_id);
+        $paket->instruktur_id = $request->instruktur_id;
+        $paket->save();
+
+        return response()->json(['status' => 'success', 'message' => 'Coach berhasil dipilih!'], 200);
+    }
+
     public function getInstrukturPtTersedia($member_id) 
     {
-        // Cari member ini ada di cabang mana
-        $member = Member::find($member_id);
-        $cabang_id_member = $member->lokasi_id;
+        // 1. Cari paket PT aktif milik member ini
+        $paketPt = MemberPaketPt::where('member_id', $member_id)
+                    ->where('status', 'Aktif')
+                    ->where('sisa_sesi', '>', 0)
+                    ->first();
 
-        // Ambil jadwal HANYA untuk instruktur yang lokasi_id-nya SAMA dengan member
+        // 2. Jika belum punya paket atau belum memilih coach, kembalikan kosong
+        if (!$paketPt || !$paketPt->instruktur_id) {
+            return response()->json(['status' => 'success', 'data' => []], 200);
+        }
+
+        // 3. Ambil jadwal HANYA untuk instruktur yang SUDAH DIPILIH di paket tersebut
         $tersedia = KetersediaanInstruktur::with('instruktur')
-            ->whereHas('instruktur', function ($query) use ($cabang_id_member) {
-                $query->where('lokasi_id', $cabang_id_member); // FILTER CABANG!
-            })
+            ->where('instruktur_id', $paketPt->instruktur_id) // <--- FILTER KUNCI
             ->where('tanggal', '>=', Carbon::now()->toDateString())
             ->where('is_booked', 0)
             ->orderBy('tanggal', 'asc')->orderBy('jam_mulai', 'asc')->get();
