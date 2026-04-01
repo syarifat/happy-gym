@@ -200,18 +200,27 @@ class MemberApiController extends Controller
 
                     // 3. LOGIKA KUNCI: Bedakan Paket Gym Umum vs Personal Trainer
                     $paket = $pemesanan->paket;
+                    $member = Member::find($pemesanan->member_id); // <--- Tarik data member di sini
+
                     if ($paket->jenis == 'Personal Training' || str_contains(strtolower($paket->nama_paket), 'pt')) {
-                        // Jika beli PT -> Tambah sesi
+                        // A. Jika beli PT -> Tambah kuota sesi di tabel khusus PT
                         MemberPaketPt::create([
                             'member_id' => $pemesanan->member_id,
                             'paket_id' => $paket->paket_id,
-                            'sisa_sesi' => $paket->jumlah_sesi ?? 12, // Default 12 sesi jika null
+                            'sisa_sesi' => $paket->jumlah_sesi ?? 12, 
                             'expired_date' => Carbon::now()->addDays($paket->durasi ?? 30)->toDateString(),
                             'status' => 'Aktif'
                         ]);
+
+                        // B. PERBAIKAN: Aktifkan juga status membership utamanya agar Dashboard Hijau!
+                        $member->status_membership = 'Aktif';
+                        
+                        // Opsional: Set masa aktif member sesuai durasi paket PT
+                        $member->tanggal_berakhir_member = Carbon::now()->addDays($paket->durasi ?? 30)->toDateString();
+                        $member->save();
+
                     } else {
                         // Jika beli Gym Umum -> Aktifkan Member & Set Tanggal Habis
-                        $member = Member::find($pemesanan->member_id);
                         $member->status_membership = 'Aktif';
                         $member->tanggal_berakhir_member = Carbon::now()->addDays($paket->durasi ?? 30)->toDateString();
                         $member->save();
