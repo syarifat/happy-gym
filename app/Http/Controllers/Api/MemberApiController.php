@@ -23,6 +23,7 @@ use App\Models\MemberPaketPt;
 use App\Models\KetersediaanInstruktur;
 use App\Models\BookingPt;
 use App\Models\Lokasi; // <--- Pastikan ini ada
+use App\Models\KunjunganGym;
 
 class MemberApiController extends Controller
 {
@@ -401,5 +402,68 @@ class MemberApiController extends Controller
                 $query->where('member_id', $member_id);
             })->orderBy('created_at', 'desc')->get();
         return response()->json(['status' => 'success', 'data' => $riwayat], 200);
+    }
+
+    // =========================================================================
+    // BAGIAN 6: PRESENSI MANDIRI (CHECK-IN GEDUNG)
+    // =========================================================================
+
+    public function getStatusPresensi($member_id)
+    {
+        // Mengecek apakah hari ini member sudah check-in dan belum check-out
+        $kunjungan = KunjunganGym::where('member_id', $member_id)
+            ->where('tanggal', now()->toDateString())
+            ->where('status_kunjungan', 'Masuk')
+            ->first();
+
+        return response()->json([
+            'status' => 'success',
+            'is_check_in' => $kunjungan ? true : false,
+            'data' => $kunjungan
+        ]);
+    }
+
+    public function checkIn(Request $request)
+    {
+        $request->validate(['member_id' => 'required', 'lokasi_id' => 'required']);
+
+        // Mencegah double check-in di hari yang sama
+        $cekSudahMasuk = KunjunganGym::where('member_id', $request->member_id)
+                            ->where('tanggal', now()->toDateString())
+                            ->where('status_kunjungan', 'Masuk')
+                            ->first();
+
+        if ($cekSudahMasuk) {
+            return response()->json(['status' => 'error', 'message' => 'Anda sudah Check-in sebelumnya.'], 400);
+        }
+
+        $kunjungan = KunjunganGym::create([
+            'member_id' => $request->member_id,
+            'lokasi_id' => $request->lokasi_id,
+            'tanggal' => now()->toDateString(),
+            'waktu_masuk' => now()->toTimeString(),
+            'status_kunjungan' => 'Masuk'
+        ]);
+
+        return response()->json(['status' => 'success', 'message' => 'Berhasil Check-in! Selamat berlatih.', 'data' => $kunjungan], 201);
+    }
+
+    public function checkOut(Request $request)
+    {
+        // Cari data check-in hari ini yang statusnya masih 'Masuk'
+        $kunjungan = KunjunganGym::where('member_id', $request->member_id)
+            ->where('tanggal', now()->toDateString())
+            ->where('status_kunjungan', 'Masuk')
+            ->first();
+
+        if ($kunjungan) {
+            $kunjungan->waktu_keluar = now()->toTimeString();
+            $kunjungan->status_kunjungan = 'Selesai';
+            $kunjungan->save();
+            
+            return response()->json(['status' => 'success', 'message' => 'Berhasil Check-out! Hati-hati di jalan.']);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan / Anda belum Check-in'], 404);
     }
 }

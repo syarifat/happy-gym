@@ -41,6 +41,10 @@ Route::prefix('member')->group(function () {
     Route::get('/pt/coach-cabang/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getCoachCabang']);
     Route::post('/pt/pilih-coach', [\App\Http\Controllers\Api\MemberApiController::class, 'pilihCoachPt']);
 
+    // 6. Presensi Mandiri Gedung
+    Route::get('/presensi/status/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getStatusPresensi']);
+    Route::post('/presensi/check-in', [\App\Http\Controllers\Api\MemberApiController::class, 'checkIn']);
+    Route::post('/presensi/check-out', [\App\Http\Controllers\Api\MemberApiController::class, 'checkOut']);
 });
 
 // ==========================================
