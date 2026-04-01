@@ -16,4 +16,10 @@ class MemberPaketPt extends Model
     {
         return $this->belongsTo(Instruktur::class, 'instruktur_id', 'instruktur_id');
     }
+
+    // Relasi untuk mengambil semua jadwal booking dari paket ini
+    public function bookingPts()
+    {
+        return $this->hasMany(BookingPt::class, 'member_paket_id', 'member_paket_id');
     }
+}

@@ -101,18 +101,30 @@ class InstrukturApiController extends Controller
     // 2. Instruktur melihat jadwal melatih PT (Siapa & Jam Berapa)
     public function getJadwalMelatihPt($instruktur_id)
     {
-        // Cari jadwal PT instruktur yang status bookingnya 'Booked'
-        $jadwal = BookingPt::with(['ketersediaan', 'memberPaket.member'])
-            ->whereHas('ketersediaan', function($query) use ($instruktur_id) {
-                $query->where('instruktur_id', $instruktur_id);
-            })
-            ->where('status', 'Booked') // Hanya tampilkan yang belum di-scan
-            ->get();
+        // Tarik semua Klien (Member) yang memilih instruktur ini
+        $klien = \App\Models\MemberPaketPt::with([
+            'member', // Ambil data membernya
+            'bookingPts' => function($query) {
+                // Ambil HANYA jadwal booking yang statusnya Booked/Reschedule dan tanggalnya hari ini/ke depan
+                $query->whereIn('status', ['Booked', 'Reschedule'])
+                      ->whereHas('ketersediaan', function($q) {
+                          $q->where('tanggal', '>=', \Carbon\Carbon::now()->toDateString());
+                      })
+                      ->with('ketersediaan'); // Ambil jam & tanggalnya
+            }
+        ])
+        ->where('instruktur_id', $instruktur_id)
+        ->where('status', 'Aktif')
+        ->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $jadwal
-        ]);
+        // Rapikan urutan jadwal per member berdasarkan tanggal dan jam terdekat
+        $klien->each(function ($item) {
+            $item->setRelation('bookingPts', $item->bookingPts->sortBy(function ($booking) {
+                return $booking->ketersediaan->tanggal . ' ' . $booking->ketersediaan->jam_mulai;
+            })->values());
+        });
+
+        return response()->json(['status' => 'success', 'data' => $klien], 200);
     }
 
     // 3. Scan QR Code Absensi PT (Mengurangi sisa sesi paket 12 -> 11)
