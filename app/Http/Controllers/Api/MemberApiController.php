@@ -427,7 +427,20 @@ class MemberApiController extends Controller
     {
         $request->validate(['member_id' => 'required', 'lokasi_id' => 'required']);
 
-        // Mencegah double check-in di hari yang sama
+        // --- 1. SATPAM VALIDASI MEMBERSHIP ---
+        $member = Member::find($request->member_id);
+        
+        // Cek apakah statusnya tidak aktif, atau tanggal berakhirnya sudah lewat
+        if (!$member || $member->status_membership !== 'Aktif' || $member->tanggal_berakhir_member < now()->toDateString()) {
+            // Jika membership mati/habis, tolak Check-in!
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Gagal: Membership Anda belum aktif atau sudah kedaluwarsa. Silakan beli paket terlebih dahulu.'
+            ], 403);
+        }
+        // -------------------------------------
+
+        // --- 2. CEK DOUBLE CHECK-IN ---
         $cekSudahMasuk = KunjunganGym::where('member_id', $request->member_id)
                             ->where('tanggal', now()->toDateString())
                             ->where('status_kunjungan', 'Masuk')
@@ -437,11 +450,12 @@ class MemberApiController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Anda sudah Check-in sebelumnya.'], 400);
         }
 
+        // --- 3. CATAT CHECK-IN ---
         $kunjungan = KunjunganGym::create([
             'member_id' => $request->member_id,
             'lokasi_id' => $request->lokasi_id,
             'tanggal' => now()->toDateString(),
-            'waktu_masuk' => now()->toTimeString(),
+            'waktu_masuk' => now()->toTimeString(), // Sekarang sudah pakai jam WIB yang benar!
             'status_kunjungan' => 'Masuk'
         ]);
 
