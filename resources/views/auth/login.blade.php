@@ -1,4 +1,8 @@
 <x-guest-layout>
+    <div class="flex justify-center mb-8">
+        <img src="{{ asset('storage/images/logo.png') }}" alt="Happy Gym Logo" class="h-24 w-auto object-contain">
+    </div>
+
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <form method="POST" action="{{ route('login') }}">
