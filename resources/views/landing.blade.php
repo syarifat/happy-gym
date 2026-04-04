@@ -107,7 +107,7 @@
                 <div class="col-lg-5 position-relative">
                     <img src="{{ asset('storage/'.$lokasi->foto) }}" class="img-fluid w-100" style="height: 300px; object-fit:cover;">
                     <div class="p-0">
-                        <iframe src="{{ $lokasi->maps_link }}" width="100%" height="250" style="border:0;" allowfullscreen loading="lazy"></iframe>
+                        <iframe src="{{ $lokasi->link_google_maps }}" width="100%" height="250" style="border:0;" allowfullscreen loading="lazy"></iframe>
                     </div>
                 </div>
 
