@@ -16,12 +16,8 @@
         
         <div class="w-full sm:max-w-md px-10 py-12 bg-white shadow-2xl rounded-2xl">
             <div class="flex flex-col items-center mb-8">
-                <div class="flex items-center gap-2 mb-2">
-                    <div class="w-10 h-10 bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-xl">
-                        h
-                    </div>
-                    <span class="text-2xl font-extrabold text-gray-800 tracking-tight">happy<span class="text-red-600">gym</span></span>
-                </div>
+                <img src="{{ asset('storage/images/logo.png') }}" alt="Logo Happy Gym" class="h-20 w-auto object-contain mb-2">
+                
                 <h2 class="text-xl font-bold text-gray-900 mt-2">Admin Happy Gym</h2>
             </div>
 
