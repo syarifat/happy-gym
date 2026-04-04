@@ -162,23 +162,56 @@
                     <div class="mt-2 p-3 bg-light rounded-4">
                         <h6 class="fw-bold mb-3"><i class="bi bi-person-badge-fill text-danger me-2"></i>Instruktur di Cabang Ini:</h6>
                         <div class="row g-2">
-                            @forelse($lokasi->instrukturs as $instruktur)
-                                <div class="col-sm-6">
-                                    <div class="d-flex align-items-center p-2 bg-white border rounded shadow-sm">
-                                        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                            <i class="bi bi-person-fill fs-5"></i>
+                            <div class="mt-4">
+                                <button type="button" class="btn btn-outline-danger w-100 fw-bold rounded-pill py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalInstruktur{{ $lokasi->lokasi_id }}">
+                                    <i class="bi bi-people-fill me-2"></i> Lihat Instruktur Cabang Ini
+                                </button>
+                            </div>
+
+                            <div class="modal fade" id="modalInstruktur{{ $lokasi->lokasi_id }}" tabindex="-1" aria-labelledby="modalLabel{{ $lokasi->lokasi_id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                    <div class="modal-content border-0 rounded-4 shadow">
+                                        
+                                        <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+                                            <h5 class="modal-title fw-bold" id="modalLabel{{ $lokasi->lokasi_id }}">
+                                                <i class="bi bi-person-badge-fill me-2"></i> Instruktur {{ $lokasi->nama }}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <div>
-                                            <h6 class="mb-0 fw-bold" style="font-size: 0.9rem;">{{ $instruktur->nama }}</h6>
-                                            <small class="text-muted" style="font-size: 0.8rem;">{{ $instruktur->spesialisasi ?? 'General Trainer' }}</small>
+                                        
+                                        <div class="modal-body p-4 bg-light">
+                                            <div class="row g-3">
+                                                @forelse($lokasi->instrukturs as $instruktur)
+                                                    <div class="col-12">
+                                                        <div class="d-flex align-items-center p-3 bg-white border border-light rounded-4 shadow-sm transition-hover">
+                                                            
+                                                            @if($instruktur->foto)
+                                                                <img src="{{ asset('storage/' . $instruktur->foto) }}" alt="{{ $instruktur->nama }}" class="rounded-circle object-fit-cover me-3 shadow-sm" style="width: 65px; height: 65px;">
+                                                            @else
+                                                                <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0 shadow-sm" style="width: 65px; height: 65px;">
+                                                                    <i class="bi bi-person-fill fs-2"></i>
+                                                                </div>
+                                                            @endif
+                                                            
+                                                            <div>
+                                                                <h5 class="mb-1 fw-bold text-dark">{{ $instruktur->nama }}</h5>
+                                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-3 py-2">
+                                                                    <i class="bi bi-star-fill me-1 small"></i> {{ $instruktur->spesialisasi ?? 'General Trainer' }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @empty
+                                                    <div class="col-12 text-center py-5">
+                                                        <i class="bi bi-emoji-frown text-muted fs-1 d-block mb-3"></i>
+                                                        <p class="text-muted fw-semibold mb-0">Belum ada instruktur yang ditugaskan di cabang ini.</p>
+                                                    </div>
+                                                @endforelse
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            @empty
-                                <div class="col-12">
-                                    <p class="text-muted small mb-0"><em>Belum ada instruktur yang ditugaskan di cabang ini.</em></p>
-                                </div>
-                            @endforelse
+                            </div>
                         </div>
                     </div>
 

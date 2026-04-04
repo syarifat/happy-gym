@@ -17,7 +17,8 @@ class Instruktur extends Authenticatable
         'username',
         'password',
         'spesialisasi',
-        'lokasi_id', // Pastikan ini ada
+        'lokasi_id',
+        'foto', // Pastikan ini ada
     ];
 
     protected $hidden = [

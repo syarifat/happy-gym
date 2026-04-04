@@ -49,9 +49,13 @@
                 <tr class="hover:bg-gray-50 transition">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold text-lg">
-                                {{ substr($i->nama, 0, 1) }}
-                            </div>
+                            @if($i->foto)
+                                <img src="{{ asset('storage/' . $i->foto) }}" alt="Foto {{ $i->nama }}" class="flex-shrink-0 h-12 w-12 rounded-full object-cover shadow-sm border border-gray-200">
+                            @else
+                                <div class="flex-shrink-0 h-12 w-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold text-lg border border-red-200">
+                                    {{ substr($i->nama, 0, 1) }}
+                                </div>
+                            @endif
                             <div class="ml-4">
                                 <div class="text-sm font-bold text-gray-900">{{ $i->nama }}</div>
                                 <div class="text-sm text-gray-500">Username: {{ $i->username }}</div>

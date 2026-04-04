@@ -6,6 +6,7 @@ use App\Models\Instruktur;
 use App\Models\Lokasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class InstrukturController extends Controller
 {
@@ -42,16 +43,24 @@ class InstrukturController extends Controller
             'username' => 'required|string|max:255|unique:instrukturs,username',
             'password' => 'required|string|min:6',
             'spesialisasi' => 'nullable|string|max:255',
-            'lokasi_id' => 'required|exists:lokasis,lokasi_id', // Validasi wajib pilih cabang
+            'lokasi_id' => 'required|exists:lokasis,lokasi_id',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi foto
         ]);
 
-        Instruktur::create([
+        $data = [
             'nama' => $request->nama,
             'username' => $request->username,
-            'password' => Hash::make($request->password), // Password dienkripsi
+            'password' => Hash::make($request->password),
             'spesialisasi' => $request->spesialisasi,
             'lokasi_id' => $request->lokasi_id,
-        ]);
+        ];
+
+        // Jika admin mengupload foto
+        if ($request->hasFile('foto')) {
+            $data['foto'] = $request->file('foto')->store('instruktur', 'public');
+        }
+
+        Instruktur::create($data);
 
         return redirect()->route('instruktur.index')->with('success', 'Instruktur berhasil ditambahkan!');
     }
@@ -70,9 +79,10 @@ class InstrukturController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:instrukturs,username,'.$id.',instruktur_id',
-            'password' => 'nullable|string|min:6', // Optional (tidak wajib diisi jika tidak ingin ganti password)
+            'password' => 'nullable|string|min:6', 
             'spesialisasi' => 'nullable|string|max:255',
             'lokasi_id' => 'required|exists:lokasis,lokasi_id',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi foto
         ]);
 
         $data = [
@@ -82,9 +92,18 @@ class InstrukturController extends Controller
             'lokasi_id' => $request->lokasi_id,
         ];
 
-        // Jika form password diisi, update passwordnya
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+
+        // Jika admin mengganti foto
+        if ($request->hasFile('foto')) {
+            // Hapus foto lama dari storage jika ada
+            if ($instruktur->foto && Storage::disk('public')->exists($instruktur->foto)) {
+                Storage::disk('public')->delete($instruktur->foto);
+            }
+            // Simpan foto baru
+            $data['foto'] = $request->file('foto')->store('instruktur', 'public');
         }
 
         $instruktur->update($data);
