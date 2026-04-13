@@ -19,6 +19,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('member/export/excel', [MemberController::class, 'exportExcel'])->name('member.export.excel');
+Route::get('member/export/pdf', [MemberController::class, 'exportPdf'])->name('member.export.pdf');
 Route::resource('member', MemberController::class);
 Route::resource('instruktur', InstrukturController::class);
 Route::resource('paket', PaketController::class);

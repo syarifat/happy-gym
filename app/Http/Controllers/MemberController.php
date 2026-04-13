@@ -9,16 +9,85 @@ use Illuminate\Support\Facades\Hash;
 class MemberController extends Controller
 {
     // 1. Tampilkan Halaman Data Member (Read / Index)
-    public function index()
+    public function index(Request $request)
     {
-        $members = Member::orderBy('created_at', 'desc')->get();
+        $query = Member::with(['paketPts.instruktur'])->orderBy('created_at', 'desc');
+
+        // Filter by Search (Nama, Email, HP)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('no_hp', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by Bulan Gabung
+        if ($request->filled('bulan') && $request->bulan != '') {
+            $query->whereMonth('tanggal_mulai_member', $request->bulan)
+                  ->orWhereMonth('created_at', $request->bulan);
+        }
+
+        // Filter by Membership Status
+        if ($request->filled('status_membership') && $request->status_membership != '') {
+            $query->where('status_membership', $request->status_membership);
+        }
+
+        $members = $query->get();
+
         return view('member.index', compact('members'));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $members = Member::with(['paketPts.instruktur'])->orderBy('created_at', 'desc')->get();
+
+        $filename = "data_member_" . date('Y-m-d_H-i-s') . ".csv";
+        $handle = fopen('php://output', 'w');
+        
+        $headers = array(
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=\"$filename\"",
+        );
+
+        ob_start();
+        fputcsv($handle, ['No', 'Nama', 'Konta (Email/HP)', 'Status Membership', 'Paket Gym Umum', 'Paket Personal Trainer']);
+
+        foreach ($members as $index => $member) {
+            $status_gym = ($member->status_membership == 'Aktif' && $member->tanggal_berakhir_member) ? 'Aktif s/d ' . \Carbon\Carbon::parse($member->tanggal_berakhir_member)->format('d M Y') : 'Tidak Aktif';
+            
+            $pt_info = '-';
+            if ($member->paketPts && $member->paketPts->count() > 0) {
+                $pt = $member->paketPts->first();
+                $coach = $pt->instruktur ? $pt->instruktur->nama : 'Belum Ada';
+                $pt_info = "Sisa " . $pt->sisa_sesi . " Sesi (Coach: " . $coach . ")";
+            }
+
+            fputcsv($handle, [
+                $index + 1,
+                $member->nama,
+                $member->email . ' / ' . ($member->no_hp ?? '-'),
+                $member->status_membership,
+                $status_gym,
+                $pt_info
+            ]);
+        }
+        fclose($handle);
+        return \Response::make(ob_get_clean(), 200, $headers);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $members = Member::with(['paketPts.instruktur'])->orderBy('created_at', 'desc')->get();
+        $pdf = \Pdf::loadView('member.pdf', compact('members'));
+        return $pdf->download('data_member_'.date('Ymd_His').'.pdf');
     }
 
     // 2. Tampilkan Detail Member (Show)
     public function show($id)
     {
-        $member = Member::findOrFail($id);
+        $member = Member::with(['paketPts.instruktur'])->findOrFail($id);
         return view('member.show', compact('member'));
     }
 

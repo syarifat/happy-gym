@@ -7,22 +7,30 @@
 
     <h2 class="text-3xl font-bold text-gray-900 mb-6">Data Member</h2>
 
-    <div class="flex items-center gap-4 mb-6">
-        <input type="text" placeholder="Cari member..." class="border-gray-300 rounded-md shadow-sm w-64 focus:ring-red-500 focus:border-red-500">
-        <select class="border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
-            <option>Semua Bulan</option>
+    <form method="GET" action="{{ route('member.index') }}" class="flex items-center gap-4 mb-6">
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari member..." class="border-gray-300 rounded-md shadow-sm w-64 focus:ring-red-500 focus:border-red-500">
+        <select name="bulan" class="border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+            <option value="">Semua Bulan</option>
+            @for($i=1; $i<=12; $i++)
+                <option value="{{ $i }}" {{ request('bulan') == $i ? 'selected' : '' }}>Bulan {{ $i }}</option>
+            @endfor
         </select>
-        <select class="border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
-            <option>Semua Membership</option>
+        <select name="status_membership" class="border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+            <option value="">Semua Membership</option>
+            <option value="Aktif" {{ request('status_membership') == 'Aktif' ? 'selected' : '' }}>Aktif</option>
+            <option value="Tidak Aktif" {{ request('status_membership') == 'Tidak Aktif' ? 'selected' : '' }}>Tidak Aktif</option>
         </select>
-        <button class="bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">
+        <button type="submit" class="bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">
             Filter
         </button>
-    </div>
+        @if(request()->anyFilled(['search', 'bulan', 'status_membership']))
+            <a href="{{ route('member.index') }}" class="text-gray-500 hover:text-gray-700 underline">Reset</a>
+        @endif
+    </form>
 
     <div class="flex gap-4 mb-8">
-        <button class="bg-[#2bc466] hover:bg-green-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">Export Excel</button>
-        <button class="bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">Export PDF</button>
+        <a href="{{ route('member.export.excel') }}" class="inline-block bg-[#2bc466] hover:bg-green-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">Export CSV</a>
+        <a href="{{ route('member.export.pdf') }}" class="inline-block bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">Export PDF</a>
     </div>
 
     @if(session('success'))
@@ -38,7 +46,8 @@
                     <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider">No</th>
                     <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider">Nama & Kontak</th>
                     <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider text-center">Status</th>
-                    <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider text-center">Masa Aktif</th>
+                    <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider text-center">Gym Umum</th>
+                    <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider text-center">Personal Trainer</th>
                     <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider text-center">Aksi</th>
                 </tr>
             </thead>
@@ -58,10 +67,19 @@
                         @endif
                     </td>
                     <td class="py-4 px-6 text-center text-gray-600 text-sm">
-                        @if($member->tanggal_berakhir_member)
-                            {{ \Carbon\Carbon::parse($member->tanggal_berakhir_member)->format('d M Y') }}
+                        @if($member->status_membership == 'Aktif' && $member->tanggal_berakhir_member)
+                            Aktif s/d <br> <strong>{{ \Carbon\Carbon::parse($member->tanggal_berakhir_member)->format('d M Y') }}</strong>
                         @else
-                            -
+                            <span class="text-gray-400">-</span>
+                        @endif
+                    </td>
+                    <td class="py-4 px-6 text-center text-gray-600 text-sm">
+                        @if($member->paketPts && $member->paketPts->count() > 0)
+                            @php $pt = $member->paketPts->first(); @endphp
+                            Sisa: <strong>{{ $pt->sisa_sesi }} Sesi</strong><br>
+                            Coach: {{ $pt->instruktur ? $pt->instruktur->nama : 'Belum Ada' }}
+                        @else
+                            <span class="text-gray-400">-</span>
                         @endif
                     </td>
                     <td class="py-4 px-6 text-center">

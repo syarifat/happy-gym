@@ -51,6 +51,45 @@
                             {{ $member->tanggal_berakhir_member ? \Carbon\Carbon::parse($member->tanggal_berakhir_member)->format('d F Y') : '-' }}
                         </span>
                     </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 md:col-span-2">
+                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 border-t border-gray-100 pt-6">Detail Paket Personal Trainer (PT)</h3>
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    @if($member->paketPts && $member->paketPts->count() > 0)
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-gray-500 border-b border-gray-200">
+                                    <th class="pb-2 font-semibold">Coach / Instruktur</th>
+                                    <th class="pb-2 font-semibold">Sisa Sesi</th>
+                                    <th class="pb-2 font-semibold">Berlaku s/d</th>
+                                    <th class="pb-2 font-semibold">Status Paket</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($member->paketPts as $pt)
+                                <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-100 transition">
+                                    <td class="py-3 font-semibold text-gray-800">{{ $pt->instruktur ? $pt->instruktur->nama : 'Belum Dipilih' }}</td>
+                                    <td class="py-3">
+                                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">{{ $pt->sisa_sesi }} Sesi</span>
+                                    </td>
+                                    <td class="py-3 text-gray-700">{{ \Carbon\Carbon::parse($pt->expired_date)->format('d F Y') }}</td>
+                                    <td class="py-3">
+                                        @if($pt->status == 'Aktif')
+                                            <span class="text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded">Aktif</span>
+                                        @else
+                                            <span class="text-gray-500 font-bold text-xs bg-gray-200 px-2 py-1 rounded">{{ $pt->status }}</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p class="text-gray-500 text-sm text-center py-4">Member ini tidak memiliki paket Personal Trainer yang aktif.</p>
+                    @endif
                 </div>
             </div>
         </div>

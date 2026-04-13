@@ -20,4 +20,9 @@ class Member extends Authenticatable
     protected $hidden = [
         'password',
     ];
+
+    public function paketPts()
+    {
+        return $this->hasMany(MemberPaketPt::class, 'member_id', 'member_id')->where('status', 'Aktif');
+    }
 }

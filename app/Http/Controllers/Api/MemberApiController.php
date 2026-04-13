@@ -79,10 +79,10 @@ class MemberApiController extends Controller
 
     public function getProfile($id)
     {
-        $member = Member::find($id);
+        $member = Member::with(['paketPts.instruktur'])->find($id);
         if (!$member) return response()->json(['status' => 'error', 'message' => 'Member tidak ditemukan'], 404);
         
-        // Cari paket terakhir yang dibeli dan disetujui
+        // Cari paket terakhir yang dibeli dan disetujui (opsional legacy)
         $latestPemesanan = \App\Models\PemesananPaket::where('member_id', $id)
                             ->where('status_persetujuan', 'Disetujui')
                             ->orderBy('tanggal_pesan', 'desc')
@@ -91,6 +91,19 @@ class MemberApiController extends Controller
 
         // Tambahkan properti baru secara dinamis untuk dikirim ke Android
         $member->nama_paket_aktif = $latestPemesanan && $latestPemesanan->paket ? $latestPemesanan->paket->nama_paket : null;
+
+        // Tambahan fitur: Info Masa Aktif dan PT
+        $member->masa_aktif_gym = ($member->status_membership == 'Aktif' && $member->tanggal_berakhir_member) 
+            ? 'Aktif s/d ' . \Carbon\Carbon::parse($member->tanggal_berakhir_member)->format('d M Y') 
+            : 'Tidak Aktif';
+
+        $pt_info = 'Tidak Ada / Habis';
+        if ($member->paketPts && $member->paketPts->count() > 0) {
+            $pt = $member->paketPts->first();
+            $coach = $pt->instruktur ? $pt->instruktur->nama : 'Belum Ada';
+            $pt_info = "Sisa " . $pt->sisa_sesi . " Sesi (Coach: " . $coach . ")";
+        }
+        $member->informasi_paket_pt = $pt_info;
 
         return response()->json(['status' => 'success', 'data' => $member], 200);
     }
@@ -215,7 +228,7 @@ class MemberApiController extends Controller
 
                         // B. PERBAIKAN: Aktifkan juga status membership utamanya agar Dashboard Hijau!
                         $member->status_membership = 'Aktif';
-                        
+                        $member->tanggal_mulai_member = Carbon::now()->toDateString();
                         // Opsional: Set masa aktif member sesuai durasi paket PT
                         $member->tanggal_berakhir_member = Carbon::now()->addDays($paket->durasi ?? 30)->toDateString();
                         $member->save();
@@ -223,6 +236,7 @@ class MemberApiController extends Controller
                     } else {
                         // Jika beli Gym Umum -> Aktifkan Member & Set Tanggal Habis
                         $member->status_membership = 'Aktif';
+                        $member->tanggal_mulai_member = Carbon::now()->toDateString();
                         $member->tanggal_berakhir_member = Carbon::now()->addDays($paket->durasi ?? 30)->toDateString();
                         $member->save();
                     }
