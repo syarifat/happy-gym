@@ -25,4 +25,14 @@ class Member extends Authenticatable
     {
         return $this->hasMany(MemberPaketPt::class, 'member_id', 'member_id')->where('status', 'Aktif');
     }
+
+    public function lokasi()
+    {
+        return $this->belongsTo(Lokasi::class, 'lokasi_id', 'lokasi_id');
+    }
+
+    public function dataFisik()
+    {
+        return $this->hasMany(DataFisikMember::class, 'member_id', 'member_id')->orderBy('tanggal_pencatatan', 'desc');
+    }
 }

@@ -22,4 +22,14 @@ class MemberPaketPt extends Model
     {
         return $this->hasMany(BookingPt::class, 'member_paket_id', 'member_paket_id');
     }
+
+    public function paket()
+    {
+        return $this->belongsTo(Paket::class, 'paket_id', 'paket_id');
+    }
+
+    public function riwayatPenggunaan()
+    {
+        return $this->hasMany(RiwayatPenggunaanPt::class, 'member_paket_id', 'member_paket_id');
+    }
 }

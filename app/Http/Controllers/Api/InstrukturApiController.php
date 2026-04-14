@@ -98,33 +98,70 @@ class InstrukturApiController extends Controller
         ]);
     }
 
-    // 2. Instruktur melihat jadwal melatih PT (Siapa & Jam Berapa)
+    // 2. Instruktur melihat jadwal melatih PT (Yang sudah disetujui)
     public function getJadwalMelatihPt($instruktur_id)
     {
         // Tarik semua Klien (Member) yang memilih instruktur ini
         $klien = \App\Models\MemberPaketPt::with([
             'member', // Ambil data membernya
             'bookingPts' => function($query) {
-                // Ambil HANYA jadwal booking yang statusnya Booked/Reschedule dan tanggalnya hari ini/ke depan
-                $query->where('status', 'Booked')
-                      ->whereHas('ketersediaan', function($q) {
-                          $q->where('tanggal', '>=', \Carbon\Carbon::now()->toDateString());
-                      })
-                      ->with('ketersediaan'); // Ambil jam & tanggalnya
+                $query->whereIn('status', ['Approved', 'Hadir'])
+                      ->where('tanggal_sesi', '>=', \Carbon\Carbon::now()->toDateString())
+                      ->orderBy('tanggal_sesi', 'asc')
+                      ->orderBy('jam_sesi', 'asc');
             }
         ])
         ->where('instruktur_id', $instruktur_id)
         ->where('status', 'Aktif')
         ->get();
 
-        // Rapikan urutan jadwal per member berdasarkan tanggal dan jam terdekat
-        $klien->each(function ($item) {
-            $item->setRelation('bookingPts', $item->bookingPts->sortBy(function ($booking) {
-                return $booking->ketersediaan->tanggal . ' ' . $booking->ketersediaan->jam_mulai;
-            })->values());
-        });
-
         return response()->json(['status' => 'success', 'data' => $klien], 200);
+    }
+
+    // 2b. Instruktur melihat request Booking PT (Pending / Negotiating)
+    public function getDaftarRequestPt($instruktur_id)
+    {
+        $requests = BookingPt::with('memberPaket.member')
+            ->where('instruktur_id', $instruktur_id)
+            ->whereIn('status', ['Pending', 'Negotiating'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        return response()->json(['status' => 'success', 'data' => $requests], 200);
+    }
+
+    // 2c. Instruktur memberikan tanggapan (Approve / Reject & Negotiate)
+    public function tanggapiRequestPt(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:booking_pts,booking_id',
+            'tindakan' => 'required|in:terima,tolak'
+        ]);
+
+        $booking = BookingPt::find($request->booking_id);
+        
+        if ($booking->status !== 'Pending') {
+            return response()->json(['status' => 'error', 'message' => 'Status booking bukan Pending.'], 400);
+        }
+
+        if ($request->tindakan === 'terima') {
+            $booking->status = 'Approved';
+            $booking->save();
+            return response()->json(['status' => 'success', 'message' => 'Booking disetujui.']);
+        } else {
+            // Tolak dan berikan saran negosiasi
+            $request->validate([
+                'alasan_penolakan' => 'required',
+                'saran_tanggal' => 'required|date',
+                'saran_jam' => 'required'
+            ]);
+            $booking->status = 'Negotiating';
+            $booking->alasan_penolakan = $request->alasan_penolakan;
+            $booking->saran_tanggal = $request->saran_tanggal;
+            $booking->saran_jam = $request->saran_jam;
+            $booking->save();
+            return response()->json(['status' => 'success', 'message' => 'Tawaran negosiasi berhasil dikirim ke member.']);
+        }
     }
 
     // 3. Scan QR Code Absensi PT (Mengurangi sisa sesi paket 12 -> 11)
@@ -134,7 +171,7 @@ class InstrukturApiController extends Controller
             'booking_id' => 'required|exists:booking_pts,booking_id'
         ]);
 
-        $booking = BookingPt::with('memberPaket')->find($request->booking_id);
+        $booking = BookingPt::with(['memberPaket.member.lokasi', 'instruktur'])->find($request->booking_id);
 
         if ($booking->status === 'Hadir') {
             return response()->json(['status' => 'error', 'message' => 'QR Code sudah digunakan (Sesi Selesai).'], 400);
@@ -152,12 +189,28 @@ class InstrukturApiController extends Controller
         $booking->save();
 
         // B. Kurangi sisa sesi member (-1)
+        // Hitung total pemakaian sebelum dikurangi, untuk tau ini sesi ke-berapa
+        $paketUtuh = \App\Models\Paket::find($memberPaket->paket_id)->jumlah_sesi ?? 12; 
+        $sesiTerpakaiSaatIni = $paketUtuh - $memberPaket->sisa_sesi + 1;
+
         $memberPaket->sisa_sesi = $memberPaket->sisa_sesi - 1;
         
-        if ($memberPaket->sisa_sesi == 0) {
+        if ($memberPaket->sisa_sesi <= 0) {
             $memberPaket->status = 'Habis';
+            $memberPaket->sisa_sesi = 0; // proteksi
         }
         $memberPaket->save();
+
+        // C. Tulis ke Riwayat Penggunaan
+        \App\Models\RiwayatPenggunaanPt::create([
+            'member_paket_id' => $memberPaket->member_paket_id,
+            'booking_id' => $booking->booking_id,
+            'waktu_penggunaan' => Carbon::now(),
+            'urutan_sesi' => $sesiTerpakaiSaatIni,
+            'keterangan' => "Sesi ke-{$sesiTerpakaiSaatIni} telah diselesaikan bersama Coach " . ($booking->instruktur->nama ?? 'Instruktur'),
+            // cabang_lokasi opsional, jika bisa diambil dari member_paket_id / member
+            'cabang_lokasi' => $memberPaket->member->lokasi->nama_cabang ?? 'Cabang Gym Anda' 
+        ]);
 
         return response()->json([
             'status' => 'success',
@@ -177,5 +230,42 @@ class InstrukturApiController extends Controller
             'status' => 'success',
             'data' => $data
         ]);
+    }
+
+    // 4. Riwayat Melatih PT (Semua Klien) - Option A
+    public function getRiwayatMelatihUmum($instruktur_id)
+    {
+        $riwayat = \App\Models\RiwayatPenggunaanPt::with(['booking.instruktur', 'memberPaket.member.lokasi', 'memberPaket.paket'])
+            ->whereHas('booking', function ($query) use ($instruktur_id) {
+                $query->where('instruktur_id', $instruktur_id);
+            })
+            ->orderBy('waktu_penggunaan', 'desc')
+            ->get();
+        return response()->json(['status' => 'success', 'data' => $riwayat], 200);
+    }
+
+    // 5. Riwayat Melatih PT per Klien - Option B
+    // Kita berikan daftar Klien yang aktif/pernah dilatih yang ada relasi dengan instruktur_id ini, lalu beserta riwayat history per klien
+    public function getDaftarKlienDenganRiwayat($instruktur_id)
+    {
+        $klien = \App\Models\MemberPaketPt::with([
+            'member',
+            'paket',
+            'bookingPts' => function($query) {
+                // Booking mendatang
+                $query->whereIn('status', ['Approved', 'Pending', 'Negotiating'])
+                      ->orderBy('tanggal_sesi', 'asc');
+            },
+            'riwayatPenggunaan' => function($query) use ($instruktur_id) {
+                // History riwayat terpotong khusus oleh instruktur ini
+                $query->whereHas('booking', function($b) use ($instruktur_id) {
+                    $b->where('instruktur_id', $instruktur_id);
+                })->orderBy('waktu_penggunaan', 'desc');
+            }
+        ])
+        ->where('instruktur_id', $instruktur_id)
+        ->get();
+
+        return response()->json(['status' => 'success', 'data' => $klien], 200);
     }
 }

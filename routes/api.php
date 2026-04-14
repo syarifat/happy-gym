@@ -17,6 +17,8 @@ Route::prefix('member')->group(function () {
     Route::post('/login', [\App\Http\Controllers\Api\MemberApiController::class, 'login']);
     Route::get('/profile/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getProfile']);
     Route::put('/profile/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'updateProfile']);
+    Route::get('/data-fisik/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getDataFisik']);
+    Route::post('/data-fisik/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'simpanDataFisik']);
 
     // 2. Transaksi & Master Data (Poin 5 & 6)
     Route::get('/pakets', [\App\Http\Controllers\Api\MemberApiController::class, 'getPakets']);
@@ -31,12 +33,13 @@ Route::prefix('member')->group(function () {
     Route::get('/pt/paket-aktif/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getPaketPtAktif']);
     Route::get('/pt/instruktur/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getInstrukturPtTersedia']);
     Route::post('/pt/booking', [\App\Http\Controllers\Api\MemberApiController::class, 'bookingPt']);
-    Route::post('/pt/reschedule', [\App\Http\Controllers\Api\MemberApiController::class, 'reschedulePt']);
+    Route::post('/pt/tanggapan-negosiasi', [\App\Http\Controllers\Api\MemberApiController::class, 'tanggapanNegosiasiPt']);
 
     // 5. Riwayat (Poin 10)
     Route::get('/riwayat-pembayaran/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getRiwayatPembayaran']);
     Route::get('/riwayat-latihan/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getRiwayatLatihan']);
     Route::get('/pt/riwayat-booking/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getRiwayatBookingPt']);
+    Route::get('/pt/riwayat-sesi/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getRiwayatSesiPt']);
 
     Route::get('/pt/coach-cabang/{member_id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getCoachCabang']);
     Route::post('/pt/pilih-coach', [\App\Http\Controllers\Api\MemberApiController::class, 'pilihCoachPt']);
@@ -60,8 +63,15 @@ Route::prefix('instruktur')->group(function () {
     // --- FITUR BARU: PERSONAL TRAINER (PT) ---
     // 1. Instruktur set jadwal kosong mereka
     Route::post('/pt/set-jadwal', [InstrukturApiController::class, 'setJadwalLuangPt']);
-    // 2. Instruktur melihat siapa saja member PT yang harus dilatih
+    // 2. Instruktur melihat siapa saja member PT yang harus dilatih (Jadwal disetujui) [Dipertahankan untuk referensi]
     Route::get('/pt/jadwal/{instruktur_id}', [InstrukturApiController::class, 'getJadwalMelatihPt']);
+    // 2a. Riwayat Melatih PT Umum (Option A)
+    Route::get('/pt/riwayat-umum/{instruktur_id}', [InstrukturApiController::class, 'getRiwayatMelatihUmum']);
+    // 2c. Riwayat Melatih per Klien (Option B)
+    Route::get('/pt/daftar-klien-riwayat/{instruktur_id}', [InstrukturApiController::class, 'getDaftarKlienDenganRiwayat']);
+    // 2b. Instruktur melihat request jadwal masuk
+    Route::get('/pt/request/{instruktur_id}', [InstrukturApiController::class, 'getDaftarRequestPt']);
+    Route::post('/pt/tanggapan-request', [InstrukturApiController::class, 'tanggapiRequestPt']);
     // 3. Instruktur scan QR code booking PT milik member
     Route::post('/pt/scan-qr', [InstrukturApiController::class, 'scanQrPt']);
     Route::get('/pt/ketersediaan/{instruktur_id}', [InstrukturApiController::class, 'getKetersediaanPt']);

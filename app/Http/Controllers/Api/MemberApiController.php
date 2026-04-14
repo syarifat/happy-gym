@@ -108,6 +108,33 @@ class MemberApiController extends Controller
         return response()->json(['status' => 'success', 'data' => $member], 200);
     }
 
+    public function getDataFisik($memberId)
+    {
+        $data = \App\Models\DataFisikMember::where('member_id', $memberId)
+            ->orderBy('tanggal_pencatatan', 'desc')
+            ->get();
+        return response()->json(['status' => 'success', 'data' => $data], 200);
+    }
+
+    public function simpanDataFisik(Request $request, $memberId)
+    {
+        $request->validate([
+            'tinggi_badan' => 'required|numeric',
+            'berat_badan' => 'required|numeric',
+            'target_latihan' => 'required|string',
+        ]);
+
+        $data = \App\Models\DataFisikMember::create([
+            'member_id' => $memberId,
+            'tinggi_badan' => $request->tinggi_badan,
+            'berat_badan' => $request->berat_badan,
+            'target_latihan' => $request->target_latihan,
+            'tanggal_pencatatan' => \Carbon\Carbon::now()->toDateString()
+        ]);
+
+        return response()->json(['status' => 'success', 'message' => 'Data fisik berhasil disimpan', 'data' => $data], 201);
+    }
+
     public function updateProfile(Request $request, $id)
     {
         $member = Member::find($id);
@@ -341,49 +368,65 @@ class MemberApiController extends Controller
 
     public function bookingPt(Request $request)
     {
-        $request->validate(['member_paket_id' => 'required', 'ketersediaan_id' => 'required']);
-
-        $slot = KetersediaanInstruktur::find($request->ketersediaan_id);
-        if ($slot->is_booked) return response()->json(['status' => 'error', 'message' => 'Slot sudah dibooking'], 400);
+        $request->validate([
+            'member_paket_id' => 'required',
+            'tanggal_sesi' => 'required|date',
+            'jam_sesi' => 'required'
+        ]);
 
         $paket = MemberPaketPt::find($request->member_paket_id);
-        if ($paket->sisa_sesi <= 0) return response()->json(['status' => 'error', 'message' => 'Sisa sesi habis'], 400);
-
-        $slot->is_booked = true;
-        $slot->save();
+        if (!$paket || !$paket->instruktur_id) {
+            return response()->json(['status' => 'error', 'message' => 'Anda belum memilih Coach PT'], 400);
+        }
+        if ($paket->sisa_sesi <= 0) {
+            return response()->json(['status' => 'error', 'message' => 'Sisa sesi habis'], 400);
+        }
 
         $booking = BookingPt::create([
             'member_paket_id' => $request->member_paket_id,
-            'ketersediaan_id' => $request->ketersediaan_id,
-            'status' => 'Booked' // Poin 7: Status Booking = Booked
+            'instruktur_id' => $paket->instruktur_id,
+            'tanggal_sesi' => $request->tanggal_sesi,
+            'jam_sesi' => $request->jam_sesi,
+            'status' => 'Pending'
         ]);
 
-        return response()->json(['status' => 'success', 'message' => 'Berhasil booking PT', 'data' => $booking], 200);
+        return response()->json(['status' => 'success', 'message' => 'Berhasil mengajukan jadwal PT', 'data' => $booking], 200);
     }
 
-    public function reschedulePt(Request $request)
+    public function tanggapanNegosiasiPt(Request $request)
     {
-        // Fitur Pelengkap: Member bisa pindah jadwal jika tidak bisa datang
-        $request->validate(['booking_id' => 'required', 'ketersediaan_id_baru' => 'required']);
+        $request->validate([
+            'booking_id' => 'required|exists:booking_pts,booking_id',
+            'tindakan' => 'required|in:terima,reschedule'
+        ]);
         
-        $bookingLama = BookingPt::with('ketersediaan')->find($request->booking_id);
-        $waktuJadwalLama = Carbon::parse($bookingLama->ketersediaan->tanggal . ' ' . $bookingLama->ketersediaan->jam_mulai);
-        
-        if (Carbon::now()->diffInHours($waktuJadwalLama, false) < 6) {
-            return response()->json(['status' => 'error', 'message' => 'Maksimal reschedule adalah H-6 jam'], 400);
+        $booking = BookingPt::find($request->booking_id);
+        if ($booking->status !== 'Negotiating' && $booking->status !== 'Approved') {
+            return response()->json(['status' => 'error', 'message' => 'Status tidak valid untuk proses ini.'], 400);
         }
 
-        $slotBaru = KetersediaanInstruktur::find($request->ketersediaan_id_baru);
-        if ($slotBaru->is_booked) return response()->json(['status' => 'error', 'message' => 'Slot baru sudah terisi'], 400);
-
-        // Lepas slot lama, kunci slot baru
-        $bookingLama->ketersediaan->update(['is_booked' => false]);
-        $slotBaru->update(['is_booked' => true]);
-
-        $bookingLama->update(['status' => 'Reschedule']);
-        $bookingBaru = BookingPt::create(['member_paket_id' => $bookingLama->member_paket_id, 'ketersediaan_id' => $slotBaru->ketersediaan_id, 'status' => 'Booked']);
-
-        return response()->json(['status' => 'success', 'message' => 'Reschedule berhasil', 'data' => $bookingBaru], 200);
+        if ($request->tindakan === 'terima') {
+            $booking->tanggal_sesi = $booking->saran_tanggal;
+            $booking->jam_sesi = $booking->saran_jam;
+            $booking->status = 'Approved';
+            $booking->save();
+            return response()->json(['status' => 'success', 'message' => 'Jadwal saran disetujui.']);
+        } else {
+            // reschedule (mengajukan ulang jadwal baru)
+            $request->validate([
+                'tanggal_sesi_baru' => 'required|date',
+                'jam_sesi_baru' => 'required'
+            ]);
+            $booking->tanggal_sesi = $request->tanggal_sesi_baru;
+            $booking->jam_sesi = $request->jam_sesi_baru;
+            $booking->status = 'Pending';
+            // bersihkan alasan dan saran
+            $booking->alasan_penolakan = null;
+            $booking->saran_tanggal = null;
+            $booking->saran_jam = null;
+            $booking->save();
+            return response()->json(['status' => 'success', 'message' => 'Jadwal baru berhasil diajukan.']);
+        }
     }
 
 
@@ -411,10 +454,23 @@ class MemberApiController extends Controller
     public function getRiwayatBookingPt($member_id)
     {
         // Poin 10: Riwayat Booking Instruktur PT
-        $riwayat = BookingPt::with(['ketersediaan.instruktur'])
+        $riwayat = BookingPt::with(['instruktur'])
             ->whereHas('memberPaket', function($query) use ($member_id) {
                 $query->where('member_id', $member_id);
             })->orderBy('created_at', 'desc')->get();
+        return response()->json(['status' => 'success', 'data' => $riwayat], 200);
+    }
+
+    public function getRiwayatSesiPt($member_id)
+    {
+        // Poin Revisi Dosen: Riwayat pemotongan sesi PT secara detail
+        $riwayat = \App\Models\RiwayatPenggunaanPt::with(['booking.instruktur', 'memberPaket.paket'])
+            ->whereHas('memberPaket', function($query) use ($member_id) {
+                $query->where('member_id', $member_id);
+            })
+            ->orderBy('waktu_penggunaan', 'desc')
+            ->get();
+
         return response()->json(['status' => 'success', 'data' => $riwayat], 200);
     }
 
