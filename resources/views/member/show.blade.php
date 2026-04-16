@@ -4,9 +4,13 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-3xl">
         <div class="flex justify-between items-start border-b border-gray-100 pb-6 mb-6">
             <div class="flex items-center gap-4">
-                <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-2xl font-bold">
-                    {{ substr($member->nama, 0, 1) }}
-                </div>
+                @if($member->foto)
+                    <img src="{{ $member->foto_url }}" alt="Foto Profile" class="w-16 h-16 rounded-full object-cover shadow-sm">
+                @else
+                    <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-2xl font-bold">
+                        {{ substr($member->nama, 0, 1) }}
+                    </div>
+                @endif
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900">{{ $member->nama }}</h2>
                     <p class="text-gray-500">{{ $member->email }}</p>

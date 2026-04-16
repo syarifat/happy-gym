@@ -110,6 +110,7 @@ class MemberController extends Controller
             'status_membership' => 'required|in:Aktif,Tidak Aktif',
             'tanggal_mulai_member' => 'nullable|date',
             'tanggal_berakhir_member' => 'nullable|date',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // Persiapkan data yang akan diupdate
@@ -125,6 +126,13 @@ class MemberController extends Controller
         // Jika form password diisi, maka update password (jika kosong, biarkan password lama)
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('foto')) {
+            if ($member->foto && \Storage::disk('public')->exists($member->foto)) {
+                \Storage::disk('public')->delete($member->foto);
+            }
+            $data['foto'] = $request->file('foto')->store('members', 'public');
         }
 
         $member->update($data);

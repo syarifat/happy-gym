@@ -13,13 +13,20 @@ class Member extends Authenticatable
     protected $primaryKey = 'member_id';
 
     protected $fillable = [
-        'nama', 'email', 'password', 'no_hp', 'status_membership', 
+        'nama', 'email', 'password', 'foto', 'no_hp', 'status_membership', 
         'tanggal_mulai_member', 'tanggal_berakhir_member', 'lokasi_id'
     ];
 
     protected $hidden = [
         'password',
     ];
+
+    protected $appends = ['foto_url'];
+
+    public function getFotoUrlAttribute()
+    {
+        return $this->foto ? asset('storage/' . $this->foto) : null;
+    }
 
     public function paketPts()
     {

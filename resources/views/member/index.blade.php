@@ -44,6 +44,7 @@
             <thead>
                 <tr class="bg-gray-50 border-b border-gray-100">
                     <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider">No</th>
+                    <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider text-center">Foto</th>
                     <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider">Nama & Kontak</th>
                     <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider text-center">Status</th>
                     <th class="py-4 px-6 font-bold text-gray-700 uppercase text-xs tracking-wider text-center">Gym Umum</th>
@@ -55,6 +56,15 @@
                 @forelse ($members as $index => $member)
                 <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
                     <td class="py-4 px-6 text-gray-600">{{ $index + 1 }}</td>
+                    <td class="py-4 px-6 flex justify-center">
+                        @if($member->foto)
+                            <img src="{{ $member->foto_url }}" alt="Foto" class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                        @else
+                            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-xs border border-gray-200 shadow-sm">
+                                No
+                            </div>
+                        @endif
+                    </td>
                     <td class="py-4 px-6">
                         <div class="font-bold text-gray-800">{{ $member->nama }}</div>
                         <div class="text-sm text-gray-500">{{ $member->email }} <br> {{ $member->no_hp ?? '-' }}</div>
@@ -98,7 +108,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="py-8 text-center text-gray-500">Belum ada data member.</td>
+                    <td colspan="7" class="py-8 text-center text-gray-500">Belum ada data member.</td>
                 </tr>
                 @endforelse
             </tbody>

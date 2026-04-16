@@ -16,7 +16,7 @@ Route::prefix('member')->group(function () {
     Route::get('/lokasis', [\App\Http\Controllers\Api\MemberApiController::class, 'getLokasis']);
     Route::post('/login', [\App\Http\Controllers\Api\MemberApiController::class, 'login']);
     Route::get('/profile/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getProfile']);
-    Route::put('/profile/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'updateProfile']);
+    Route::post('/profile/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'updateProfile']);
     Route::get('/data-fisik/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getDataFisik']);
     Route::post('/data-fisik/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'simpanDataFisik']);
 

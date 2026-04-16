@@ -4,7 +4,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-2xl">
         <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">Edit Data Member</h2>
         
-        <form action="{{ route('member.update', $member->member_id) }}" method="POST" class="space-y-6">
+        <form action="{{ route('member.update', $member->member_id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
             
@@ -46,6 +46,16 @@
             <div class="mt-6 pt-6 border-t border-gray-100">
                 <label class="block text-sm font-bold text-gray-700 mb-1">Ganti Password (Opsional)</label>
                 <input type="password" name="password" minlength="6" placeholder="Kosongkan jika tidak ingin ganti password" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-gray-100">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Ganti Foto Profil (Opsional)</label>
+                @if($member->foto)
+                    <div class="mb-3">
+                        <img src="{{ $member->foto_url }}" alt="Foto" class="h-20 w-20 object-cover rounded-full border">
+                    </div>
+                @endif
+                <input type="file" name="foto" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
             </div>
 
             <div class="flex justify-end pt-6">

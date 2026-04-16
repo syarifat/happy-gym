@@ -38,8 +38,14 @@ class MemberApiController extends Controller
             'email' => 'required|string|email|max:255|unique:members,email',
             'no_hp' => 'required|string|max:15',
             'password' => 'required|string|min:6',
-            'lokasi_id' => 'required' // <--- TAMBAHAN BARU
+            'lokasi_id' => 'required',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
+
+        $fotoPath = null;
+        if ($request->hasFile('foto')) {
+            $fotoPath = $request->file('foto')->store('members', 'public');
+        }
 
         $member = Member::create([
             'nama' => $request->nama,
@@ -47,7 +53,8 @@ class MemberApiController extends Controller
             'no_hp' => $request->no_hp,
             'password' => Hash::make($request->password),
             'status_membership' => 'Tidak Aktif',
-            'lokasi_id' => $request->lokasi_id // <--- TAMBAHAN BARU (Pastikan kolom ini ada di tabel members)
+            'lokasi_id' => $request->lokasi_id,
+            'foto' => $fotoPath
         ]);
 
         return response()->json(['status' => 'success', 'message' => 'Registrasi berhasil!', 'data' => $member], 201);
@@ -74,6 +81,13 @@ class MemberApiController extends Controller
         if (!$member || !Hash::check($request->password, $member->password)) {
             return response()->json(['status' => 'error', 'message' => 'Email atau Password salah'], 401);
         }
+
+        if ($member->foto) {
+            $member->foto_url = asset('storage/' . $member->foto);
+        } else {
+            $member->foto_url = null;
+        }
+
         return response()->json(['status' => 'success', 'message' => 'Login berhasil', 'data' => $member], 200);
     }
 
@@ -104,6 +118,12 @@ class MemberApiController extends Controller
             $pt_info = "Sisa " . $pt->sisa_sesi . " Sesi (Coach: " . $coach . ")";
         }
         $member->informasi_paket_pt = $pt_info;
+        
+        if ($member->foto) {
+            $member->foto_url = asset('storage/' . $member->foto);
+        } else {
+            $member->foto_url = null;
+        }
 
         return response()->json(['status' => 'success', 'data' => $member], 200);
     }
@@ -144,6 +164,7 @@ class MemberApiController extends Controller
             'nama' => 'required|string|max:255',
             'no_hp' => 'required|string|max:15',
             'email' => 'required|string|email|unique:members,email,'.$id.',member_id',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         $member->nama = $request->nama;
@@ -152,7 +173,21 @@ class MemberApiController extends Controller
         if ($request->filled('password')) {
             $member->password = Hash::make($request->password);
         }
+
+        if ($request->hasFile('foto')) {
+            if ($member->foto && \Storage::disk('public')->exists($member->foto)) {
+                \Storage::disk('public')->delete($member->foto);
+            }
+            $member->foto = $request->file('foto')->store('members', 'public');
+        }
+
         $member->save();
+
+        if ($member->foto) {
+            $member->foto_url = asset('storage/' . $member->foto);
+        } else {
+            $member->foto_url = null;
+        }
 
         return response()->json(['status' => 'success', 'message' => 'Profil diperbarui!', 'data' => $member], 200);
     }
@@ -446,8 +481,8 @@ class MemberApiController extends Controller
 
     public function getRiwayatLatihan($member_id)
     {
-        // Poin 10: Riwayat Kehadiran Latihan Biasa (Dari tabel Presensi)
-        $riwayat = Presensi::with('instruktur')->where('member_id', $member_id)->orderBy('waktu_presensi', 'desc')->get();
+        // Poin 10: Riwayat Kehadiran Latihan Biasa (Dari tabel KunjunganGym)
+        $riwayat = KunjunganGym::where('member_id', $member_id)->orderBy('tanggal', 'desc')->orderBy('waktu_masuk', 'desc')->get();
         return response()->json(['status' => 'success', 'data' => $riwayat], 200);
     }
 
