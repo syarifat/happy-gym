@@ -33,29 +33,29 @@
             
             <div class="col-lg-6">
                 <div class="row g-4 text-center">
-                    <div class="col-6">
-                        <div class="p-4 border rounded-4 shadow-sm h-100 bg-light">
-                            <h1 class="text-danger display-5"><i class="bi bi-bicycle"></i></h1>
-                            <h5 class="fw-bold mt-3">Alat Modern</h5>
-                        </div>
+                    <div class="col-md-4 col-6">
+                        <a href="#lokasi" class="text-decoration-none text-dark d-block h-100">
+                            <div class="p-4 border rounded-4 shadow-sm h-100 bg-light hover-shadow transition">
+                                <h1 class="text-danger display-5"><i class="bi bi-bicycle"></i></h1>
+                                <h5 class="fw-bold mt-3">Alat Modern</h5>
+                            </div>
+                        </a>
                     </div>
-                    <div class="col-6">
-                        <div class="p-4 border rounded-4 shadow-sm h-100 bg-light">
-                            <h1 class="text-danger display-5"><i class="bi bi-person-video3"></i></h1>
-                            <h5 class="fw-bold mt-3">Instruktur Pro</h5>
-                        </div>
+                    <div class="col-md-4 col-6">
+                        <a href="#lokasi" class="text-decoration-none text-dark d-block h-100">
+                            <div class="p-4 border rounded-4 shadow-sm h-100 bg-light hover-shadow transition">
+                                <h1 class="text-danger display-5"><i class="bi bi-person-video3"></i></h1>
+                                <h5 class="fw-bold mt-3">Instruktur Pro</h5>
+                            </div>
+                        </a>
                     </div>
-                    <div class="col-6">
-                        <div class="p-4 border rounded-4 shadow-sm h-100 bg-light">
-                            <h1 class="text-danger display-5"><i class="bi bi-clipboard2-pulse"></i></h1>
-                            <h5 class="fw-bold mt-3">Program Terarah</h5>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-4 border rounded-4 shadow-sm h-100 bg-light">
-                            <h1 class="text-danger display-5"><i class="bi bi-tags"></i></h1>
-                            <h5 class="fw-bold mt-3">Harga Terjangkau</h5>
-                        </div>
+                    <div class="col-md-4 col-12">
+                        <a href="#paket" class="text-decoration-none text-dark d-block h-100">
+                            <div class="p-4 border rounded-4 shadow-sm h-100 bg-light hover-shadow transition">
+                                <h1 class="text-danger display-5"><i class="bi bi-tags"></i></h1>
+                                <h5 class="fw-bold mt-3">Harga Terjangkau</h5>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>

@@ -22,9 +22,12 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 Route::get('member/export/excel', [MemberController::class, 'exportExcel'])->name('member.export.excel');
 Route::get('member/export/pdf', [MemberController::class, 'exportPdf'])->name('member.export.pdf');
 Route::resource('member', MemberController::class);
+Route::get('instruktur/{id}/clients', [InstrukturController::class, 'clients'])->name('instruktur.clients');
 Route::resource('instruktur', InstrukturController::class);
 Route::resource('paket', PaketController::class);
 Route::resource('pengumuman', PengumumanController::class);
+Route::get('/transaksi/export/excel', [TransaksiController::class, 'exportExcel'])->name('transaksi.export.excel');
+Route::get('/transaksi/export/pdf', [TransaksiController::class, 'exportPdf'])->name('transaksi.export.pdf');
 Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
 Route::get('/transaksi/{id}', [TransaksiController::class, 'show'])->name('transaksi.show');
 Route::resource('lokasi', LokasiController::class);

@@ -56,6 +56,8 @@ Route::prefix('member')->group(function () {
 Route::prefix('instruktur')->group(function () {
     // --- FITUR LAMA ---
     Route::post('/login', [InstrukturApiController::class, 'login']);
+    Route::get('/profile/{id}', [InstrukturApiController::class, 'getProfile']);
+    Route::post('/profile/update/{id}', [InstrukturApiController::class, 'updateProfile']);
     Route::get('/jadwal-saya/{instruktur_id}', [InstrukturApiController::class, 'getJadwalSaya']);
     Route::get('/daftar-booking/{instruktur_id}', [InstrukturApiController::class, 'getDaftarBooking']);
     Route::post('/scan-absensi', [InstrukturApiController::class, 'scanAbsensi']);

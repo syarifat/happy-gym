@@ -14,7 +14,9 @@
 
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <form action="{{ route('instruktur.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full">
-            <label for="lokasi_id" class="text-sm font-bold text-gray-700">Filter berdasarkan Cabang:</label>
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama instruktur..." class="border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm w-64">
+            
+            <label for="lokasi_id" class="text-sm font-bold text-gray-700">Cabang:</label>
             <select name="lokasi_id" id="lokasi_id" class="border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm min-w-[200px]">
                 <option value="">-- Semua Cabang --</option>
                 @foreach($lokasis as $l)
@@ -27,7 +29,7 @@
                 Terapkan Filter
             </button>
 
-            @if(request('lokasi_id'))
+            @if(request('lokasi_id') || request('search'))
                 <a href="{{ route('instruktur.index') }}" class="text-red-500 hover:text-red-700 hover:underline font-semibold text-sm transition">
                     Hapus Filter
                 </a>
@@ -76,6 +78,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex gap-3">
+                            <a href="{{ route('instruktur.clients', $i->instruktur_id) }}" class="text-green-600 hover:text-green-900 font-semibold">Daftar Client</a>
                             <a href="{{ route('instruktur.edit', $i->instruktur_id) }}" class="text-blue-600 hover:text-blue-900 font-semibold">Edit</a>
                             <form action="{{ route('instruktur.destroy', $i->instruktur_id) }}" method="POST" onsubmit="return confirm('Hapus instruktur ini?')">
                                 @csrf @method('DELETE')

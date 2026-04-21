@@ -23,7 +23,16 @@ class InstrukturController extends Controller
             $query->where('lokasi_id', $request->lokasi_id);
         }
 
-        // 4. Eksekusi query
+        // 4. Filter by Search (Nama atau Username)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%");
+            });
+        }
+
+        // 5. Eksekusi query
         $instrukturs = $query->get();
 
         return view('instruktur.index', compact('instrukturs', 'lokasis'));
@@ -117,5 +126,19 @@ class InstrukturController extends Controller
         $instruktur->delete();
         
         return redirect()->route('instruktur.index')->with('success', 'Instruktur berhasil dihapus!');
+    }
+
+    public function clients($id)
+    {
+        $instruktur = Instruktur::findOrFail($id);
+        
+        // Ambil member yang memiliki paket PT aktif dengan instruktur ini
+        $clients = \App\Models\Member::whereHas('paketPts', function($q) use ($id) {
+            $q->where('instruktur_id', $id)->where('status', 'Aktif');
+        })->with(['paketPts' => function($q) use ($id) {
+            $q->where('instruktur_id', $id);
+        }])->get();
+        
+        return view('instruktur.clients', compact('instruktur', 'clients'));
     }
 }

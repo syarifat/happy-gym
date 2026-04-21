@@ -31,6 +31,45 @@ class InstrukturApiController extends Controller
         return response()->json(['status' => 'success', 'data' => $instruktur], 200);
     }
 
+    public function updateProfile(Request $request, $id)
+    {
+        $instruktur = Instruktur::find($id);
+        if (!$instruktur) return response()->json(['status' => 'error', 'message' => 'Instruktur tidak ditemukan'], 404);
+
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:instrukturs,username,'.$id.',instruktur_id',
+            'spesialisasi' => 'nullable|string|max:255',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        $instruktur->nama = $request->nama;
+        $instruktur->username = $request->username;
+        $instruktur->spesialisasi = $request->spesialisasi;
+        
+        if ($request->filled('password')) {
+            $instruktur->password = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('foto')) {
+            if ($instruktur->foto && \Storage::disk('public')->exists($instruktur->foto)) {
+                \Storage::disk('public')->delete($instruktur->foto);
+            }
+            $instruktur->foto = $request->file('foto')->store('instrukturs', 'public');
+        }
+
+        $instruktur->save();
+
+        return response()->json(['status' => 'success', 'message' => 'Profil diperbarui!', 'data' => $instruktur], 200);
+    }
+
+    public function getProfile($id)
+    {
+        $instruktur = Instruktur::find($id);
+        if (!$instruktur) return response()->json(['status' => 'error', 'message' => 'Instruktur tidak ditemukan'], 404);
+        return response()->json(['status' => 'success', 'data' => $instruktur], 200);
+    }
+
     public function getJadwalSaya($instruktur_id)
     {
         $jadwal = JadwalLatihan::where('instruktur_id', $instruktur_id)->get();

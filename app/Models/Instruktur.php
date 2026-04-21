@@ -25,6 +25,13 @@ class Instruktur extends Authenticatable
         'password',
     ];
 
+    protected $appends = ['foto_url'];
+
+    public function getFotoUrlAttribute()
+    {
+        return $this->foto ? asset('storage/' . $this->foto) : null;
+    }
+
     // Relasi ke tabel Lokasi (Cabang)
     public function lokasi()
     {

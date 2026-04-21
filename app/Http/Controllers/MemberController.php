@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Member;
+use App\Models\Lokasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -11,7 +12,7 @@ class MemberController extends Controller
     // 1. Tampilkan Halaman Data Member (Read / Index)
     public function index(Request $request)
     {
-        $query = Member::with(['paketPts.instruktur'])->orderBy('created_at', 'desc');
+        $query = Member::with(['paketPts.instruktur', 'lokasi'])->orderBy('created_at', 'desc');
 
         // Filter by Search (Nama, Email, HP)
         if ($request->filled('search')) {
@@ -34,9 +35,15 @@ class MemberController extends Controller
             $query->where('status_membership', $request->status_membership);
         }
 
-        $members = $query->get();
+        // Filter by Lokasi (Cabang)
+        if ($request->filled('lokasi_id') && $request->lokasi_id != '') {
+            $query->where('lokasi_id', $request->lokasi_id);
+        }
 
-        return view('member.index', compact('members'));
+        $members = $query->get();
+        $lokasis = Lokasi::all();
+
+        return view('member.index', compact('members', 'lokasis'));
     }
 
     public function exportExcel(Request $request)
