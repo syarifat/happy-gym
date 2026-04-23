@@ -19,6 +19,7 @@ Route::prefix('member')->group(function () {
     Route::post('/profile/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'updateProfile']);
     Route::get('/data-fisik/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'getDataFisik']);
     Route::post('/data-fisik/{id}', [\App\Http\Controllers\Api\MemberApiController::class, 'simpanDataFisik']);
+    Route::get('/pengumuman', [\App\Http\Controllers\Api\MemberApiController::class, 'getPengumuman']);
 
     // 2. Transaksi & Master Data (Poin 5 & 6)
     Route::get('/pakets', [\App\Http\Controllers\Api\MemberApiController::class, 'getPakets']);
@@ -61,6 +62,7 @@ Route::prefix('instruktur')->group(function () {
     Route::get('/jadwal-saya/{instruktur_id}', [InstrukturApiController::class, 'getJadwalSaya']);
     Route::get('/daftar-booking/{instruktur_id}', [InstrukturApiController::class, 'getDaftarBooking']);
     Route::post('/scan-absensi', [InstrukturApiController::class, 'scanAbsensi']);
+    Route::get('/pengumuman', [InstrukturApiController::class, 'getPengumuman']);
 
     // --- FITUR BARU: PERSONAL TRAINER (PT) ---
     // 1. Instruktur set jadwal kosong mereka

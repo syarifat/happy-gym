@@ -12,6 +12,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\DashboardController;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing.index');
+Route::get('/promo/{id}', [LandingController::class, 'showPromo'])->name('promo.show');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

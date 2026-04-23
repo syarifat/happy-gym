@@ -63,6 +63,14 @@ class InstrukturApiController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Profil diperbarui!', 'data' => $instruktur], 200);
     }
 
+    public function getPengumuman()
+    {
+        $data = \App\Models\Pengumuman::where('tampil_instruktur', true)
+            ->orderBy('tanggal_post', 'desc')
+            ->get();
+        return response()->json(['status' => 'success', 'data' => $data], 200);
+    }
+
     public function getProfile($id)
     {
         $instruktur = Instruktur::find($id);

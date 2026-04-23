@@ -156,6 +156,14 @@ class MemberApiController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Data fisik berhasil disimpan', 'data' => $data], 201);
     }
 
+    public function getPengumuman()
+    {
+        $data = \App\Models\Pengumuman::where('tampil_member', true)
+            ->orderBy('tanggal_post', 'desc')
+            ->get();
+        return response()->json(['status' => 'success', 'data' => $data], 200);
+    }
+
     public function updateProfile(Request $request, $id)
     {
         $member = Member::find($id);

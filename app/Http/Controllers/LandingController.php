@@ -16,7 +16,16 @@ class LandingController extends Controller
         // Tarik semua data paket
         $pakets = Paket::all(); 
 
+        // Tarik pengumuman untuk web
+        $pengumumans = \App\Models\Pengumuman::where('tampil_web', true)->orderBy('tanggal_post', 'desc')->get();
+
         // Kirim keduanya ke view 'landing'
-        return view('landing', compact('lokasis', 'pakets'));
+        return view('landing', compact('lokasis', 'pakets', 'pengumumans'));
+    }
+
+    public function showPromo($id)
+    {
+        $pengumuman = \App\Models\Pengumuman::findOrFail($id);
+        return view('promo_detail', compact('pengumuman'));
     }
 }

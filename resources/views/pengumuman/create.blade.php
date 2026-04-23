@@ -24,6 +24,24 @@
                 <p class="text-xs text-gray-400 mt-1">Format: JPG, PNG. Maksimal 2MB.</p>
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tampilkan Pengumuman di:</label>
+                <div class="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-6">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="tampil_web" class="form-checkbox text-red-500" value="1" checked>
+                        <span class="ml-2 text-gray-700">Web Landing Page</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="tampil_member" class="form-checkbox text-red-500" value="1" checked>
+                        <span class="ml-2 text-gray-700">Aplikasi Member</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="tampil_instruktur" class="form-checkbox text-red-500" value="1" checked>
+                        <span class="ml-2 text-gray-700">Aplikasi Instruktur</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="flex justify-end pt-4">
                 <button type="submit" class="bg-[#e45151] hover:bg-red-700 text-white font-bold py-2 px-8 rounded shadow-sm transition">
                     Posting Sekarang

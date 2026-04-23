@@ -34,6 +34,24 @@
                 <input type="file" name="foto" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tampilkan Pengumuman di:</label>
+                <div class="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-6">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="tampil_web" class="form-checkbox text-red-500" value="1" {{ $pengumuman->tampil_web ? 'checked' : '' }}>
+                        <span class="ml-2 text-gray-700">Web Landing Page</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="tampil_member" class="form-checkbox text-red-500" value="1" {{ $pengumuman->tampil_member ? 'checked' : '' }}>
+                        <span class="ml-2 text-gray-700">Aplikasi Member</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="tampil_instruktur" class="form-checkbox text-red-500" value="1" {{ $pengumuman->tampil_instruktur ? 'checked' : '' }}>
+                        <span class="ml-2 text-gray-700">Aplikasi Instruktur</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="flex justify-end pt-4">
                 <button type="submit" class="bg-[#2bc466] hover:bg-green-700 text-white font-bold py-2 px-8 rounded shadow-sm transition">
                     Simpan Perubahan

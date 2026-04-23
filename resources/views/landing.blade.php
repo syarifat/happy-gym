@@ -63,6 +63,43 @@
     </div>
 </section>
 
+@if($pengumumans->count() > 0)
+<section id="pengumuman" class="py-5" style="background-color: #fcfcfc;">
+    <div class="container py-4">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-dark">Promo & <span class="text-danger">Pengumuman</span></h2>
+            <p class="text-muted">Jangan lewatkan penawaran spesial dan informasi terbaru dari Happy Gym.</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            @foreach($pengumumans as $pengumuman)
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden" style="transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        @if($pengumuman->foto)
+                            <img src="{{ asset('storage/' . $pengumuman->foto) }}" class="card-img-top" style="height: 220px; object-fit: cover;" alt="Promo Banner">
+                        @else
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center text-muted" style="height: 220px;">
+                                <i class="bi bi-megaphone" style="font-size: 3rem;"></i>
+                            </div>
+                        @endif
+                        <div class="card-body p-4 d-flex flex-column">
+                            <span class="badge bg-danger mb-3 align-self-start">{{ \Carbon\Carbon::parse($pengumuman->tanggal_post)->format('d M Y') }}</span>
+                            <h5 class="card-title fw-bold text-dark mb-3">{{ $pengumuman->judul }}</h5>
+                            <p class="card-text text-secondary mb-4 flex-grow-1" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ $pengumuman->deskripsi }}
+                            </p>
+                            <a href="{{ route('promo.show', $pengumuman->pengumuman_id) }}" class="btn btn-outline-danger w-100 mt-auto fw-semibold">
+                                Lihat Selengkapnya
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
 <section id="paket" class="py-5 bg-dark text-white">
     <div class="container py-4">
         <div class="text-center mb-5">

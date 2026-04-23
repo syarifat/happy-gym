@@ -31,6 +31,9 @@ class PengumumanController extends Controller
         $data = $request->all();
         $data['admin_id'] = Auth::guard('admin')->id();
         $data['tanggal_post'] = now();
+        $data['tampil_web'] = $request->has('tampil_web');
+        $data['tampil_member'] = $request->has('tampil_member');
+        $data['tampil_instruktur'] = $request->has('tampil_instruktur');
 
         if ($request->hasFile('foto')) {
             $data['foto'] = $request->file('foto')->store('pengumuman', 'public');
@@ -60,6 +63,9 @@ class PengumumanController extends Controller
         ]);
 
         $data = $request->except('foto');
+        $data['tampil_web'] = $request->has('tampil_web');
+        $data['tampil_member'] = $request->has('tampil_member');
+        $data['tampil_instruktur'] = $request->has('tampil_instruktur');
 
         if ($request->hasFile('foto')) {
             // Hapus foto lama jika ada foto baru yang diunggah

@@ -18,6 +18,9 @@ class Pengumuman extends Model
         'deskripsi',
         'foto',
         'tanggal_post',
+        'tampil_web',
+        'tampil_member',
+        'tampil_instruktur',
     ];
 
     public function admin()
