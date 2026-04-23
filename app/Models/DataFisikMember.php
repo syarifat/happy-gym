@@ -16,8 +16,8 @@ class DataFisikMember extends Model
         'member_id',
         'tinggi_badan',
         'berat_badan',
-        'target_latihan',
-        'tanggal_pencatatan'
+        'umur',
+        'massa_otot'
     ];
 
     public function member()

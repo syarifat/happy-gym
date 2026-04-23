@@ -128,10 +128,10 @@ class MemberApiController extends Controller
         return response()->json(['status' => 'success', 'data' => $member], 200);
     }
 
-    public function getDataFisik($memberId)
+    public function getDataFisik($id)
     {
-        $data = \App\Models\DataFisikMember::where('member_id', $memberId)
-            ->orderBy('tanggal_pencatatan', 'desc')
+        $data = \App\Models\DataFisikMember::where('member_id', $id)
+            ->orderBy('created_at', 'desc')
             ->get();
         return response()->json(['status' => 'success', 'data' => $data], 200);
     }
@@ -141,15 +141,16 @@ class MemberApiController extends Controller
         $request->validate([
             'tinggi_badan' => 'required|numeric',
             'berat_badan' => 'required|numeric',
-            'target_latihan' => 'required|string',
+            'umur' => 'required|integer',
+            'massa_otot' => 'nullable|numeric',
         ]);
 
         $data = \App\Models\DataFisikMember::create([
             'member_id' => $memberId,
             'tinggi_badan' => $request->tinggi_badan,
             'berat_badan' => $request->berat_badan,
-            'target_latihan' => $request->target_latihan,
-            'tanggal_pencatatan' => \Carbon\Carbon::now()->toDateString()
+            'umur' => $request->umur,
+            'massa_otot' => $request->massa_otot
         ]);
 
         return response()->json(['status' => 'success', 'message' => 'Data fisik berhasil disimpan', 'data' => $data], 201);
