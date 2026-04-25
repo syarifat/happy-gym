@@ -110,18 +110,30 @@
         <div class="row g-4 text-center justify-content-center">
             @foreach($pakets as $index => $paket)
                 <div class="col-md-4">
-                    {{-- Logika agar paket di tengah (index ke-1) tampil beda/menonjol --}}
-                    @if($index == 1)
+                    {{-- Logika agar paket terpopuler tampil beda/menonjol --}}
+                    @if($popularPaketId ? $paket->paket_id == $popularPaketId : $index == 1)
                         <div class="card border-0 bg-white text-dark p-5 rounded-4 h-100 shadow-lg" style="transform: scale(1.05); z-index: 1;">
                             <div class="badge bg-danger position-absolute top-0 start-50 translate-middle px-3 py-2 rounded-pill">PALING POPULER</div>
                             <h4 class="fw-bold mt-2">{{ $paket->nama_paket }}</h4>
-                            <h2 class="text-danger fw-bold my-3">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h2>
+                            @if($paket->is_diskon_aktif)
+                                <h5 class="text-muted text-decoration-line-through mb-1">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h5>
+                                <h2 class="text-danger fw-bold my-2">Rp {{ number_format($paket->harga_diskon, 0, ',', '.') }}</h2>
+                                <span class="badge bg-warning text-dark mb-3">Diskon s/d {{ \Carbon\Carbon::parse($paket->tanggal_akhir_diskon)->format('d M Y') }}</span>
+                            @else
+                                <h2 class="text-danger fw-bold my-3">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h2>
+                            @endif
                             <p class="small text-muted mb-0">Durasi: {{ $paket->durasi }} hari. Akses penuh kelas reguler.</p>
                         </div>
                     @else
                         <div class="card border-0 bg-secondary text-white p-5 rounded-4 h-100 hover-shadow">
                             <h4 class="fw-bold">{{ $paket->nama_paket }}</h4>
-                            <h2 class="text-danger fw-bold my-3">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h2>
+                            @if($paket->is_diskon_aktif)
+                                <h5 class="text-light text-decoration-line-through opacity-75 mb-1">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h5>
+                                <h2 class="text-danger fw-bold my-2">Rp {{ number_format($paket->harga_diskon, 0, ',', '.') }}</h2>
+                                <span class="badge bg-warning text-dark mb-3">Diskon s/d {{ \Carbon\Carbon::parse($paket->tanggal_akhir_diskon)->format('d M Y') }}</span>
+                            @else
+                                <h2 class="text-danger fw-bold my-3">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h2>
+                            @endif
                             <p class="small text-light mb-0">Durasi: {{ $paket->durasi }} hari. {{ $paket->jenis }} eksklusif.</p>
                         </div>
                     @endif

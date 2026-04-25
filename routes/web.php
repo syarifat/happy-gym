@@ -10,6 +10,7 @@ use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\LokasiController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DiskonController;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing.index');
 Route::get('/promo/{id}', [LandingController::class, 'showPromo'])->name('promo.show');
@@ -27,6 +28,7 @@ Route::get('instruktur/{id}/clients', [InstrukturController::class, 'clients'])-
 Route::resource('instruktur', InstrukturController::class);
 Route::resource('paket', PaketController::class);
 Route::resource('pengumuman', PengumumanController::class);
+Route::resource('diskon', DiskonController::class);
 Route::get('/transaksi/export/excel', [TransaksiController::class, 'exportExcel'])->name('transaksi.export.excel');
 Route::get('/transaksi/export/pdf', [TransaksiController::class, 'exportPdf'])->name('transaksi.export.pdf');
 Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');

@@ -19,8 +19,15 @@ class LandingController extends Controller
         // Tarik pengumuman untuk web
         $pengumumans = \App\Models\Pengumuman::where('tampil_web', true)->orderBy('tanggal_post', 'desc')->get();
 
-        // Kirim keduanya ke view 'landing'
-        return view('landing', compact('lokasis', 'pakets', 'pengumumans'));
+        // Cari paket dengan jumlah transaksi/pemesanan terbanyak
+        $popularPaketId = \App\Models\PemesananPaket::select('paket_id')
+            ->groupBy('paket_id')
+            ->orderByRaw('COUNT(*) DESC')
+            ->first()
+            ->paket_id ?? null;
+
+        // Kirim semuanya ke view 'landing'
+        return view('landing', compact('lokasis', 'pakets', 'pengumumans', 'popularPaketId'));
     }
 
     public function showPromo($id)

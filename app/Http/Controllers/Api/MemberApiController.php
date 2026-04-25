@@ -208,7 +208,20 @@ class MemberApiController extends Controller
 
     public function getPakets()
     {
-        $pakets = Paket::all();
+        $pakets = Paket::all()->map(function($paket) {
+            $diskonAktif = $paket->harga_diskon && $paket->tanggal_akhir_diskon
+                && Carbon::now()->startOfDay()->lte(Carbon::parse($paket->tanggal_akhir_diskon)->startOfDay());
+            return [
+                'paket_id'             => $paket->paket_id,
+                'nama_paket'           => $paket->nama_paket,
+                'jenis'                => $paket->jenis,
+                'harga'                => $paket->harga,
+                'durasi'               => $paket->durasi,
+                'harga_diskon'         => $diskonAktif ? $paket->harga_diskon : null,
+                'tanggal_akhir_diskon' => $diskonAktif ? $paket->tanggal_akhir_diskon : null,
+                'is_diskon_aktif'      => $diskonAktif,
+            ];
+        });
         return response()->json(['status' => 'success', 'data' => $pakets], 200);
     }
 
@@ -241,9 +254,13 @@ class MemberApiController extends Controller
         Config::$isSanitized = config('midtrans.is_sanitized');
         Config::$is3ds = config('midtrans.is_3ds');
 
+        $diskonAktif = $paket->harga_diskon && $paket->tanggal_akhir_diskon
+            && Carbon::now()->startOfDay()->lte(Carbon::parse($paket->tanggal_akhir_diskon)->startOfDay());
+        $hargaBayar = $diskonAktif ? $paket->harga_diskon : $paket->harga;
+
         $params = [
-            'transaction_details' => ['order_id' => $orderId, 'gross_amount' => $paket->harga],
-            'customer_details' => ['first_name' => $member->nama, 'email' => $member->email, 'phone' => $member->no_hp]
+            'transaction_details' => ['order_id' => $orderId, 'gross_amount' => (int) $hargaBayar],
+            'customer_details'    => ['first_name' => $member->nama, 'email' => $member->email, 'phone' => $member->no_hp]
         ];
 
         try {

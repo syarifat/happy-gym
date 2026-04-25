@@ -37,6 +37,9 @@
             <a href="{{ url('/lokasi') }}" class="block py-3 px-4 rounded-lg transition duration-200 {{ request()->is('lokasi*') ? 'bg-red-50 text-[#db3535] font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-[#db3535]' }}">
                 Lokasi
             </a>
+            <a href="{{ url('/diskon') }}" class="block py-3 px-4 rounded-lg transition duration-200 {{ request()->is('diskon*') ? 'bg-red-50 text-[#db3535] font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-[#db3535]' }}">
+                Kelola Diskon
+            </a>
         </nav>
     </div>
 

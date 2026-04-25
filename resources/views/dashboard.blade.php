@@ -48,6 +48,31 @@
 
     </div>
 
+    <!-- FITUR CHART TRANSAKSI PAKET -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h3 class="font-bold text-gray-900">Grafik Transaksi Paket</h3>
+            <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap gap-3 items-center">
+                <select name="cabang_id" class="text-sm border-gray-300 rounded-md shadow-sm" onchange="this.form.submit()">
+                    <option value="">Semua Cabang</option>
+                    @foreach($lokasis as $lok)
+                        <option value="{{ $lok->lokasi_id }}" {{ request('cabang_id') == $lok->lokasi_id ? 'selected' : '' }}>{{ $lok->nama_cabang }}</option>
+                    @endforeach
+                </select>
+                <select name="rentang" class="text-sm border-gray-300 rounded-md shadow-sm" onchange="this.form.submit()">
+                    <option value="">Semua Waktu</option>
+                    <option value="hari_ini" {{ request('rentang') == 'hari_ini' ? 'selected' : '' }}>Hari Ini</option>
+                    <option value="minggu_ini" {{ request('rentang') == 'minggu_ini' ? 'selected' : '' }}>Minggu Ini</option>
+                    <option value="bulan_ini" {{ request('rentang') == 'bulan_ini' ? 'selected' : '' }}>Bulan Ini</option>
+                    <option value="tahun_ini" {{ request('rentang') == 'tahun_ini' ? 'selected' : '' }}>Tahun Ini</option>
+                </select>
+            </form>
+        </div>
+        <div class="p-6">
+            <canvas id="paketChart" style="max-height: 350px;"></canvas>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
@@ -104,4 +129,40 @@
             </div>
         </div>
     </div>
+
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('paketChart').getContext('2d');
+            const labels = {!! json_encode($paketLabels) !!};
+            const dataValues = {!! json_encode($paketValues) !!};
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Transaksi',
+                        data: dataValues,
+                        backgroundColor: '#dc2626', // Red-600
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        });
+    </script>
 </x-app-layout>

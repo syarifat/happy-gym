@@ -20,8 +20,20 @@ class Paket extends Model
         'nama_paket',
         'jenis',
         'harga',
+        'harga_diskon',
+        'tanggal_akhir_diskon',
         'durasi',
     ];
+
+    protected $appends = ['is_diskon_aktif'];
+
+    public function getIsDiskonAktifAttribute()
+    {
+        if ($this->harga_diskon && $this->tanggal_akhir_diskon) {
+            return \Carbon\Carbon::now()->startOfDay()->lte(\Carbon\Carbon::parse($this->tanggal_akhir_diskon)->startOfDay());
+        }
+        return false;
+    }
 
     /**
      * Relasi ke PemesananPaket (Opsi jika nanti dibutuhkan)
