@@ -14,6 +14,7 @@ use App\Http\Controllers\DiskonController;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing.index');
 Route::get('/promo/{id}', [LandingController::class, 'showPromo'])->name('promo.show');
+Route::get('/download', function() { return view('download'); })->name('download');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

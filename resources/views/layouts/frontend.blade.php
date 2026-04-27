@@ -58,7 +58,7 @@
                 </ul>
                 
                 <div class="ms-lg-3 mt-3 mt-lg-0">
-                    <a href="{{ asset('HappyGym Member.apk') }}" download class="btn btn-danger px-4 rounded-pill fw-semibold shadow-sm"><i class="bi bi-android2 me-1"></i>Daftar Member</a>
+                    <a href="{{ route('download') }}" class="btn btn-danger px-4 rounded-pill fw-semibold shadow-sm"><i class="bi bi-android2 me-1"></i>Download Aplikasi</a>
                 </div>
             </div>
         </div>

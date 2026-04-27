@@ -11,7 +11,7 @@
             <a href="#paket" class="btn btn-danger btn-lg px-5 py-3 fw-bold rounded-pill shadow">
                 Lihat Paket Membership
             </a>
-            <a href="{{ asset('HappyGym Member.apk') }}" download class="btn btn-dark btn-lg px-5 py-3 fw-bold rounded-pill shadow d-flex align-items-center gap-2">
+            <a href="{{ route('download') }}" class="btn btn-dark btn-lg px-5 py-3 fw-bold rounded-pill shadow d-flex align-items-center gap-2">
                 <i class="bi bi-android2"></i> Download Aplikasi
             </a>
         </div>
@@ -128,7 +128,7 @@
                                 <h2 class="text-danger fw-bold my-3">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h2>
                             @endif
                             <p class="small text-muted mb-3">Durasi: {{ $paket->durasi }} hari. Akses penuh kelas reguler.</p>
-                            <a href="{{ asset('HappyGym Member.apk') }}" download class="btn btn-danger rounded-pill fw-bold px-4">
+                            <a href="{{ route('download') }}" class="btn btn-danger rounded-pill fw-bold px-4">
                                 <i class="bi bi-android2 me-1"></i> Daftar Member
                             </a>
                         </div>
@@ -143,7 +143,7 @@
                                 <h2 class="text-danger fw-bold my-3">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h2>
                             @endif
                             <p class="small text-light mb-3">Durasi: {{ $paket->durasi }} hari. {{ $paket->jenis }} eksklusif.</p>
-                            <a href="{{ asset('HappyGym Member.apk') }}" download class="btn btn-outline-light rounded-pill fw-bold px-4">
+                            <a href="{{ route('download') }}" class="btn btn-outline-light rounded-pill fw-bold px-4">
                                 <i class="bi bi-android2 me-1"></i> Daftar Member
                             </a>
                         </div>
