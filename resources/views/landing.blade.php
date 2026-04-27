@@ -7,9 +7,14 @@
     <div style="background:rgba(255,255,255,0.85); padding:50px; border-radius:15px; max-width: 800px;" class="shadow-lg mx-3">
         <h1 class="display-4 fw-bold text-dark mb-3">Transform Your Body at Happy Gym</h1>
         <p class="lead text-dark mb-4">Tempat terbaik untuk membentuk tubuh ideal Anda dengan fasilitas premium dan instruktur berpengalaman.</p>
-        <a href="#paket" class="btn btn-danger btn-lg px-5 py-3 fw-bold rounded-pill shadow">
-            Lihat Paket Membership
-        </a>
+        <div class="d-flex flex-wrap gap-3 justify-content-center">
+            <a href="#paket" class="btn btn-danger btn-lg px-5 py-3 fw-bold rounded-pill shadow">
+                Lihat Paket Membership
+            </a>
+            <a href="{{ asset('HappyGym Member.apk') }}" download class="btn btn-dark btn-lg px-5 py-3 fw-bold rounded-pill shadow d-flex align-items-center gap-2">
+                <i class="bi bi-android2"></i> Download Aplikasi
+            </a>
+        </div>
     </div>
 </section>
 
@@ -122,7 +127,10 @@
                             @else
                                 <h2 class="text-danger fw-bold my-3">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h2>
                             @endif
-                            <p class="small text-muted mb-0">Durasi: {{ $paket->durasi }} hari. Akses penuh kelas reguler.</p>
+                            <p class="small text-muted mb-3">Durasi: {{ $paket->durasi }} hari. Akses penuh kelas reguler.</p>
+                            <a href="{{ asset('HappyGym Member.apk') }}" download class="btn btn-danger rounded-pill fw-bold px-4">
+                                <i class="bi bi-android2 me-1"></i> Daftar Member
+                            </a>
                         </div>
                     @else
                         <div class="card border-0 bg-secondary text-white p-5 rounded-4 h-100 hover-shadow">
@@ -134,7 +142,10 @@
                             @else
                                 <h2 class="text-danger fw-bold my-3">Rp {{ number_format($paket->harga, 0, ',', '.') }}</h2>
                             @endif
-                            <p class="small text-light mb-0">Durasi: {{ $paket->durasi }} hari. {{ $paket->jenis }} eksklusif.</p>
+                            <p class="small text-light mb-3">Durasi: {{ $paket->durasi }} hari. {{ $paket->jenis }} eksklusif.</p>
+                            <a href="{{ asset('HappyGym Member.apk') }}" download class="btn btn-outline-light rounded-pill fw-bold px-4">
+                                <i class="bi bi-android2 me-1"></i> Daftar Member
+                            </a>
                         </div>
                     @endif
                 </div>
