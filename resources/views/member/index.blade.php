@@ -35,7 +35,7 @@
     </form>
 
     <div class="flex gap-4 mb-8">
-        <a href="{{ route('member.export.excel') }}" class="inline-block bg-[#2bc466] hover:bg-green-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">Export CSV</a>
+        <a href="{{ route('member.export.excel') }}" class="inline-block bg-[#2bc466] hover:bg-green-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">Export Excel</a>
         <a href="{{ route('member.export.pdf') }}" class="inline-block bg-[#e45151] hover:bg-red-600 text-white font-semibold py-2 px-6 rounded shadow-sm transition">Export PDF</a>
     </div>
 

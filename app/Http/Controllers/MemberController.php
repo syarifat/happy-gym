@@ -50,17 +50,42 @@ class MemberController extends Controller
     {
         $members = Member::with(['paketPts.instruktur'])->orderBy('created_at', 'desc')->get();
 
-        $filename = "data_member_" . date('Y-m-d_H-i-s') . ".csv";
-        $handle = fopen('php://output', 'w');
-        
-        $headers = array(
-            "Content-Type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=\"$filename\"",
-        );
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data Member Happy Gym');
 
-        ob_start();
-        fputcsv($handle, ['No', 'Nama', 'Konta (Email/HP)', 'Status Membership', 'Paket Gym Umum', 'Paket Personal Trainer']);
+        // Header Style
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'DC2626'], // Tailwind Red-600
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000'],
+                ],
+            ],
+        ];
 
+        // Header row
+        $headers = ['No', 'Nama', 'Kontak (Email/HP)', 'Status Membership', 'Paket Gym Umum', 'Paket Personal Trainer'];
+        $columnLetter = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($columnLetter . '1', $header);
+            $sheet->getColumnDimension($columnLetter)->setAutoSize(true);
+            $columnLetter++;
+        }
+        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+        $sheet->getRowDimension(1)->setRowHeight(25);
+
+        // Data rows
+        $row = 2;
         foreach ($members as $index => $member) {
             $status_gym = ($member->status_membership == 'Aktif' && $member->tanggal_berakhir_member) ? 'Aktif s/d ' . \Carbon\Carbon::parse($member->tanggal_berakhir_member)->format('d M Y') : 'Tidak Aktif';
             
@@ -71,17 +96,45 @@ class MemberController extends Controller
                 $pt_info = "Sisa " . $pt->sisa_sesi . " Sesi (Coach: " . $coach . ")";
             }
 
-            fputcsv($handle, [
-                $index + 1,
-                $member->nama,
-                $member->email . ' / ' . ($member->no_hp ?? '-'),
-                $member->status_membership,
-                $status_gym,
-                $pt_info
-            ]);
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $member->nama);
+            $sheet->setCellValue('C' . $row, $member->email . ' / ' . ($member->no_hp ?? '-'));
+            $sheet->setCellValue('D' . $row, $member->status_membership);
+            $sheet->setCellValue('E' . $row, $status_gym);
+            $sheet->setCellValue('F' . $row, $pt_info);
+            
+            // Align center for some columns
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('D' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            
+            $row++;
         }
-        fclose($handle);
-        return \Response::make(ob_get_clean(), 200, $headers);
+
+        // Add border to all data cells
+        $dataStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'D1D5DB'], // Tailwind Gray-300
+                ],
+            ],
+        ];
+        if ($row > 2) {
+            $sheet->getStyle('A2:F' . ($row - 1))->applyFromArray($dataStyle);
+        }
+
+        $filename = "data_member_" . date('Y-m-d_H-i-s') . ".xlsx";
+        
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        return response($content)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
     }
 
     public function exportPdf(Request $request)
